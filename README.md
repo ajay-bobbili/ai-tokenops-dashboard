@@ -59,7 +59,7 @@ Open http://localhost:4317 (on Windows you can double-click `start.bat`). The se
 
 ## Credits
 
-- **Claude**, **Claude Code**, and the Claude name, logo and mascot are trademarks of [Anthropic, PBC](https://www.anthropic.com). This is an unofficial community project, not affiliated with, endorsed by, or sponsored by Anthropic. The logo and mascot used here are fan-made drawings inspired by Anthropic's originals.
+- Unofficial project, not affiliated with Anthropic. Claude and Claude Code are trademarks of [Anthropic, PBC](https://www.anthropic.com); the logo and mascot here are fan-made.
 - Usage data comes from the session logs written by [Claude Code](https://claude.com/claude-code).
 - Built with Claude Code by [@ajay-bobbili](https://github.com/ajay-bobbili).
 
