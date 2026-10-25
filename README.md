@@ -1,4 +1,4 @@
-# TokenOps
+# AI TokenOps Dashboard
 
 **Track. Limit. Optimise your AI token spend.**
 
