@@ -57,6 +57,12 @@ Open http://localhost:4317 (on Windows you can double-click `start.bat`). The se
 - Only Claude Code activity is visible, not the claude.ai chat app.
 - The logo and mascot are hand-drawn imitations. Claude and Anthropic marks belong to Anthropic.
 
+## Credits
+
+- **Claude**, **Claude Code**, and the Claude name, logo and mascot are trademarks of [Anthropic, PBC](https://www.anthropic.com). This is an unofficial community project, not affiliated with, endorsed by, or sponsored by Anthropic. The logo and mascot used here are fan-made drawings inspired by Anthropic's originals.
+- Usage data comes from the session logs written by [Claude Code](https://claude.com/claude-code).
+- Built with Claude Code by [@ajay-bobbili](https://github.com/ajay-bobbili).
+
 ## Files
 
 | File | Purpose |
