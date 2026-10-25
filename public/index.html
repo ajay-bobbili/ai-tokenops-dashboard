@@ -135,6 +135,7 @@ tr.a{animation:slide .6s both}@keyframes slide{from{opacity:0;transform:translat
 .brand{display:flex;flex-direction:column;gap:3px;line-height:1.2}
 .brand h1{display:flex;align-items:center;gap:10px;font-size:30px;letter-spacing:-.5px;line-height:1.05}.brand h1 span{background:var(--g);-webkit-background-clip:text;color:transparent}
 .brand .tag{font-size:13.5px;font-weight:600;color:var(--tx);opacity:.9;letter-spacing:.1px}.brand .st{font-size:11.5px;color:var(--mut)}
+.live.off{background:#6b6560;animation:none;box-shadow:none}.brand h1{margin-left:-1px}.brand .tag,.brand .st{margin-left:3px}
 </style></head><body>
 <div class="bg"><i></i><i></i><i></i></div>
 <div id="pal"><svg viewBox="0 0 100 130" shape-rendering="crispEdges"><g class="sway">
@@ -239,7 +240,7 @@ function spark(vals,col){const W=200,H=44,mx=Math.max(...vals)||1,n=vals.length,
   return`<svg class="sp" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${smooth(pts)}" pathLength="1" class="draw" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`}
 
 function render(){
-  const rs=recs(),app=$('#app');
+  const rs=recs(),app=$('#app');document.querySelector('.brand .live').classList.remove('off');
   $('#src').textContent=`${DATA.records.length.toLocaleString()} requests · ${DATA.demo?'DEMO DATA':DATA.files+' transcripts'} · estimated API-equivalent cost`;
   if(!rs.length){app.innerHTML='<div class="empty">No usage in this range.</div>';return}
   const T={i:0,o:0,cr:0,cw:0,c:0};rs.forEach(r=>{T.i+=r.i;T.o+=r.o;T.cr+=r.cr;T.cw+=r.cw;T.c+=cost(r)});
@@ -433,7 +434,7 @@ function demoData(){const models=[['claude-sonnet-5-5',.72],['claude-opus-5-5',.
   recs.sort((a,b)=>a.t-b.t);DATA={files:0,heavy:HEAVY,records:recs,demo:true};lastN=recs.length;render()}
 function onboarding(){
   const cp=t=>`<button onclick="navigator.clipboard&&navigator.clipboard.writeText(this.dataset.t);this.textContent='Copied'" data-t="${t}">Copy</button>`;
-  $('#src').textContent='not linked yet';
+  $('#src').textContent='Offline';document.querySelector('.brand .live').classList.add('off');
   $('#app').innerHTML=`<div class="card onb"><h2>Link your <span>Claude</span> usage</h2>
   <p>This dashboard reads the usage logs that <b>Claude Code</b> saves on your own computer. Your files are read <b>inside your browser</b> and are never uploaded anywhere.</p>
   <div class="step"><i>1</i><div><b>Find your Claude logs folder</b>Claude Code keeps every session as a <code>.jsonl</code> file in a hidden folder called <code>.claude/projects</code>:
