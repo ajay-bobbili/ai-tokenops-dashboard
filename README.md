@@ -1,4 +1,6 @@
-# Claude Usage Dashboard
+# Claude-i-nator 🤖
+
+> The Claude usage monitor. It tracks your tokens, terminates wasteful model choices.
 
 A local, privacy-first dashboard that shows how much of Claude you're using, which models you're using, and where you could save money.
 
