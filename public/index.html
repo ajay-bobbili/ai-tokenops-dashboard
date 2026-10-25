@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Usage Dashboard</title>
+<style>
+:root{--bg:#1c1b19;--card:#2a2926;--line:#ffffff17;--tx:#f5f1ea;--mut:#a39d93;--opus:#e8743b;--fable:#c76b8f;--sonnet:#f2b872;--haiku:#9db8a0;--other:#64748b;--g:linear-gradient(120deg,#ff9a5c,#e8743b)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,Segoe UI,system-ui,sans-serif;overflow-x:hidden}
+/* animated aurora + grid */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.bg i{position:absolute;border-radius:50%;opacity:.35}
+.bg i:nth-child(1){width:700px;height:700px;background:radial-gradient(circle,#b8481c 0,transparent 68%);left:-200px;top:-220px}
+.bg i:nth-child(2){width:600px;height:600px;background:radial-gradient(circle,#8a5a2b 0,transparent 68%);right:-160px;top:5%;opacity:.28}
+.bg i:nth-child(3){display:none}
+.bg:after{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:48px 48px;}
+
+.wrap{max-width:1320px;margin:0 auto;padding:26px 20px 70px}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px;animation:rise .7s both}
+.logo{width:46px;height:46px;border-radius:14px;background:#262522;border:1px solid #ffffff17;display:grid;place-items:center;position:relative}
+.logo:before{content:"";position:absolute;inset:-5px;border-radius:18px;border:2px solid #e8743b;opacity:0;display:none}
+.logo svg{width:30px;height:30px}
+@keyframes ping{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.35);opacity:0}}
+h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.3px}
+h1 span{background:var(--g);-webkit-background-clip:text;color:transparent}
+h1 small{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);font-weight:400;letter-spacing:0}
+.live{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 0 #4ade80aa;animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px #4ade8000}100%{box-shadow:0 0 0 0 #4ade8000}}
+.sp{flex:1}
+.seg{position:relative;display:flex;background:#262522;border:1px solid var(--line);border-radius:12px;padding:4px}
+.seg button{position:relative;z-index:1;background:none;border:0;color:var(--mut);padding:7px 16px;cursor:pointer;font:600 13px inherit;transition:color .25s}
+.seg button.on{color:#1a1816}
+.seg .pill{position:absolute;top:4px;bottom:4px;border-radius:9px;background:var(--g);transition:left .35s cubic-bezier(.3,1.4,.5,1),width .35s}
+.opt{position:relative;overflow:hidden;background:linear-gradient(120deg,#ff9a5c,#e8743b);color:#1a1816;border:0;border-radius:12px;padding:11px 20px;font:800 14px inherit;cursor:pointer;box-shadow:0 4px 18px #e8743b55;transition:transform .2s}
+.opt:hover{transform:translateY(-2px) scale(1.04)}
+.opt:before{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#fff9,transparent);transform:skewX(-20deg);display:none}
+@keyframes sheen{60%,100%{left:130%}}@keyframes shift{to{background-position:200% 0}}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;animation:rise .7s both;transition:border-color .25s}
+.card:hover{border-color:#e8743b88}
+
+@keyframes rise{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:none}}
+.card h3{margin:0 0 14px;font-size:11.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);font-weight:700;display:flex;justify-content:space-between}
+.kpi{display:flex;flex-direction:column}
+.kpi .v{font-size:36px;font-weight:800;letter-spacing:-1px;background:var(--g);-webkit-background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.kpi .s{color:var(--mut);font-size:12px;margin-top:2px}
+.kpi svg.sp{width:100%;height:44px;margin-top:10px}
+.cols{grid-template-columns:2fr 1fr}.cols3{grid-template-columns:repeat(3,1fr)}.cols2{grid-template-columns:1fr 1fr}
+@media(max-width:1000px){.cols,.cols3,.cols2{grid-template-columns:1fr}}
+svg text{fill:var(--mut);font-size:11px;font-family:inherit}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--mut)}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.chart{width:100%;display:block;height:auto;overflow:visible}
+.reveal{animation:wipe 1.4s cubic-bezier(.6,0,.2,1) both}
+@keyframes wipe{from{clip-path:inset(-10px 100% -10px 0)}to{clip-path:inset(-10px -10px -10px 0)}}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:dash 1.8s cubic-bezier(.5,0,.2,1) .2s forwards}
+@keyframes dash{to{stroke-dashoffset:0}}
+.bar{transform-origin:bottom;animation:grow .9s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes grow{from{transform:scaleY(0)}}
+.hbar{transform-origin:left;animation:growx 1s cubic-bezier(.2,1,.3,1) both}
+@keyframes growx{from{transform:scaleX(0)}}
+.donutwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center}
+.donut{width:190px;height:190px;transform:rotate(-90deg)}
+.donut circle{fill:none;stroke-width:22;transition:stroke-dasharray 1.3s cubic-bezier(.3,1,.3,1) var(--d,0s)}
+.dl{font-size:12.5px}.dl div{display:flex;align-items:center;gap:8px;margin:7px 0}.dl b{width:10px;height:10px;border-radius:3px}.dl span{margin-left:auto;padding-left:14px;color:var(--mut);font-variant-numeric:tabular-nums}
+.heat{display:grid;grid-template-columns:34px repeat(24,1fr);gap:3px;align-items:center}
+.heat .c{aspect-ratio:1;border-radius:4px;animation:pop .5s both;background:#e8743b}
+.heat .l{font-size:10.5px;color:var(--mut)}
+@keyframes pop{from{transform:scale(0);opacity:0}}
+.row{display:grid;grid-template-columns:130px 1fr 150px;gap:10px;align-items:center;margin:10px 0}
+.row .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tr{height:10px;border-radius:6px;background:#ffffff0d;overflow:hidden}.row .tr i{display:block;height:100%;border-radius:6px;background:var(--g)}
+.row .val{text-align:right;color:var(--mut);font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse}th{color:var(--mut);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid #ffffff0a;font-variant-numeric:tabular-nums}td.r,th.r{text-align:right}
+tr.a{animation:slide .6s both}@keyframes slide{from{opacity:0;transform:translateX(-20px)}}
+.tip{position:fixed;pointer-events:none;background:#1a1816ee;border:1px solid #e8743b88;border-radius:10px;padding:9px 12px;font-size:12px;z-index:60;display:none;white-space:pre;box-shadow:0 8px 30px #000a}
+.modal{position:fixed;inset:0;background:#12110fcc;opacity:0;pointer-events:none;transition:opacity .3s;z-index:50;overflow:auto;padding:30px 16px}
+.modal.on{opacity:1;pointer-events:auto}
+.panel{max-width:980px;margin:0 auto;background:#242321;border:1px solid #e8743b66;border-radius:22px;padding:26px;box-shadow:0 0 80px #e8743b33;transform:translateY(40px) scale(.96);transition:transform .45s cubic-bezier(.2,1.2,.4,1)}
+.modal.on .panel{transform:none}
+.panel h2{margin:0;font-size:24px;background:var(--g);-webkit-background-clip:text;color:transparent}
+.x{float:right;background:#ffffff0d;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:6px 12px;cursor:pointer}
+.big{font-size:38px;font-weight:800;font-variant-numeric:tabular-nums}
+.rec{border:1px solid var(--line);border-left:3px solid var(--sonnet);border-radius:12px;padding:12px 15px;margin:10px 0;background:#ffffff06;animation:slide .6s both}
+.rec b{color:#ffc9a3}
+.chip{display:inline-block;border-radius:20px;padding:2px 11px;font-size:11px;font-weight:800;color:#1a1816}
+.note{color:var(--mut);font-size:12px;margin-top:16px}
+.empty{padding:80px;text-align:center;color:var(--mut)}
+.sub{color:var(--mut);font-size:12px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin:22px 0 8px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+.gear{background:#262522;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:11px 16px;font:600 13px inherit;cursor:pointer}.gear:hover{border-color:#e8743b88}
+.lims{grid-template-columns:1fr 1fr;margin-bottom:16px}@media(max-width:900px){.lims{grid-template-columns:1fr}}
+.lim{display:flex;gap:20px;align-items:center}.lim svg{width:128px;height:128px;transform:rotate(-90deg);flex:none}
+.lim circle{fill:none;stroke-width:13;stroke-linecap:round}.lim .ring{transition:stroke-dasharray 1.4s cubic-bezier(.3,1,.3,1),stroke .4s}
+.lim .pc{position:absolute;left:0;top:50%;transform:translateY(-50%);width:128px;text-align:center;font-size:24px;font-weight:800}
+.lim .m{flex:1;min-width:0}.lim .amt{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}.lim .amt small{font-size:14px;color:var(--mut);font-weight:500}
+.lim .rs{margin-top:8px;color:var(--mut);font-size:12.5px;line-height:1.7}.lim .rs b{color:var(--tx);font-variant-numeric:tabular-nums}
+.set label{display:block;margin:14px 0 4px;color:var(--mut);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.set input,.set select{width:100%;background:#1c1b19;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:10px 12px;font:inherit}
+.set .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.save2{margin-top:20px;background:var(--g);border:0;color:#1a1816;border-radius:10px;padding:11px 22px;font:800 14px inherit;cursor:pointer}
+.cur button{border-radius:9px}.cur button.on{background:var(--g);color:#1a1816}
+#pal{position:fixed;top:-27px;left:0;width:80px;height:104px;z-index:5;pointer-events:none;transform:translate(var(--x,200px),-130px);transition:transform .8s cubic-bezier(.3,1.5,.5,1);will-change:transform}
+#pal.in{transform:translate(var(--x,200px),0)}#pal.slide{transition:transform 1.4s cubic-bezier(.45,.05,.3,1)}
+#pal svg{width:80px;height:104px;overflow:visible}#pal .hit{pointer-events:auto;cursor:pointer}
+#pal .sway{transform-origin:50px 34px;animation:sway 2.6s ease-in-out infinite alternate}
+#pal.in.moving .sway{animation:sway .5s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-3.5deg)}to{transform:rotate(3.5deg)}}
+#pal .legL,#pal .legR{transform-origin:50% 0;animation:kick 1.3s ease-in-out infinite alternate}#pal .legR{animation-delay:-.65s}
+@keyframes kick{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+#pal .eye{transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
+#pal.blink .eye{animation:none;transform:scaleY(.1)}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+#pal.hop .sway{animation:hop .6s ease-out}
+@keyframes hop{30%{transform:translateY(-14px) rotate(8deg)}60%{transform:translateY(0) rotate(-6deg)}100%{transform:none}}
+#say{position:absolute;left:62px;top:36px;background:#f5f1ea;color:#1a1816;font:700 12px/1 Inter,system-ui,sans-serif;padding:6px 9px;border-radius:10px 10px 10px 2px;opacity:0;transform:translateY(6px) scale(.8);transition:.25s;white-space:nowrap}
+#say.on{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){#pal{display:none}}
+.wrap{padding-top:74px!important}
+.act{margin-bottom:16px}.actTop{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:14px}
+.actTop div{font-size:12px;color:var(--mut)}.actTop b{display:block;font-size:26px;color:var(--tx);font-variant-numeric:tabular-nums;line-height:1.1}.actTop b i{font-style:normal;color:#e8743b}
+.cal{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:4px;overflow-x:auto;padding-bottom:4px}
+.cal span{width:15px;height:15px;border-radius:4px;background:#ffffff0d;animation:pop .45s both}.cal span.t{outline:1.5px solid #f5f1ea}
+.calLeg{display:flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;color:var(--mut)}.calLeg span{width:12px;height:12px;border-radius:3px}
+</style></head><body>
+<div class="bg"><i></i><i></i><i></i></div>
+<div id="pal"><svg viewBox="0 0 100 130" shape-rendering="crispEdges"><g class="sway">
+ <rect x="1" y="34" width="6" height="56" fill="#d97757"/><rect x="93" y="34" width="6" height="56" fill="#d97757"/>
+ <g class="legL"><rect x="17" y="102" width="9" height="16" fill="#d97757"/><rect x="32" y="102" width="9" height="16" fill="#d97757"/></g>
+ <g class="legR"><rect x="59" y="102" width="9" height="16" fill="#d97757"/><rect x="74" y="102" width="9" height="16" fill="#d97757"/></g>
+ <g class="hit" id="body"><rect x="7" y="62" width="86" height="41" fill="#d97757"/>
+  <g class="eye"><g id="pL"><rect x="28" y="73" width="9" height="13" fill="#141211"/></g></g>
+  <g class="eye"><g id="pR"><rect x="63" y="73" width="9" height="13" fill="#141211"/></g></g></g>
+</g></svg><div id="say"></div></div>
+<div class="wrap">
+<header>
+  <div class="logo"><svg viewBox="0 0 24 24" stroke="#d97757" stroke-width="2.7" stroke-linecap="round"><line x1="12.00" y1="9.40" x2="12.00" y2="1.00"/><line x1="13.30" y1="9.75" x2="16.25" y2="4.64"/><line x1="14.25" y1="10.70" x2="21.09" y2="6.75"/><line x1="14.60" y1="12.00" x2="19.50" y2="12.00"/><line x1="14.25" y1="13.30" x2="21.53" y2="17.50"/><line x1="13.30" y1="14.25" x2="16.50" y2="19.79"/><line x1="12.00" y1="14.60" x2="12.00" y2="22.00"/><line x1="10.70" y1="14.25" x2="8.25" y2="18.50"/><line x1="9.75" y1="13.30" x2="2.47" y2="17.50"/><line x1="9.40" y1="12.00" x2="3.50" y2="12.00"/><line x1="9.75" y1="10.70" x2="2.91" y2="6.75"/><line x1="10.70" y1="9.75" x2="8.00" y2="5.07"/></svg></div>
+  <h1><span>Claude</span> Usage<small><i class="live"></i><em id="src" style="font-style:normal">loading…</em></small></h1><div class="sp"></div>
+  <div class="seg" id="range"><div class="pill"></div><button data-d="1">24h</button><button data-d="7">7d</button><button data-d="30" class="on">30d</button><button data-d="0">All</button></div>
+  <div class="seg cur" id="curSel"><button data-c="INR">₹ INR</button><button data-c="USD">$ USD</button></div>
+  <button class="gear" id="limBtn">⚙ Limits</button>
+  <button class="opt" id="optBtn">⚡ Optimise</button>
+</header>
+<div id="app"></div>
+</div>
+<div class="modal" id="modal"><div class="panel" id="panel"></div></div>
+<div class="tip" id="tip"></div>
+<script>
+// Estimated list prices, USD per million tokens (converted to INR at USD_INR). Edit to match your pricing.
+const PRICES={haiku:{i:1,o:5},sonnet:{i:3,o:15},opus:{i:5,o:25},fable:{i:15,o:75}};
+const COL={opus:'#e8743b',fable:'#c76b8f',sonnet:'#f2b872',haiku:'#9db8a0',other:'#64748b'};
+const tier=m=>/fable/.test(m)?'fable':/opus/.test(m)?'opus':/sonnet/.test(m)?'sonnet':/haiku/.test(m)?'haiku':'other';
+const USD_INR=88; // exchange rate: edit to today's rate
+const pr=t=>PRICES[t]||PRICES.sonnet;
+const cost=(r,t)=>{const p=pr(t||tier(r.model));return(r.i*p.i+r.o*p.o+r.cr*p.i*.1+r.cw*p.i*1.25)/1e6};
+const fmt=n=>n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(Math.round(n));
+let CUR='INR';try{CUR=localStorage.getItem('cur')||'INR'}catch(e){}
+const mult=()=>CUR==='INR'?USD_INR:1,sym=()=>CUR==='INR'?'₹':'$';
+const usd=n=>{const v=n*mult();return sym()+(v>=100?Math.round(v).toLocaleString(CUR==='INR'?'en-IN':'en-US'):v.toFixed(2))};
+const tot=r=>r.i+r.o+r.cr+r.cw;
+let DATA=null,DAYS=30,lastN=-1;
+const $=s=>document.querySelector(s),tip=$('#tip');
+const stagger=(sel,ms=70)=>document.querySelectorAll(sel).forEach((e,i)=>e.style.animationDelay=i*ms+'ms');
+function hover(el,txt){el.onmousemove=e=>{tip.style.display='block';tip.textContent=typeof txt==='function'?txt(e):txt;tip.style.left=Math.min(e.clientX+16,innerWidth-240)+'px';tip.style.top=e.clientY+16+'px'};el.onmouseleave=()=>tip.style.display='none'}
+function countUp(el,to,f,dur=1400){const t0=performance.now();(function s(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);el.textContent=f(to*e);if(p<1)requestAnimationFrame(s)})(t0)}
+function recs(){const from=DAYS?Date.now()-DAYS*864e5:0;return DATA.records.filter(r=>r.t>=from)}
+function group(rs,f){const m=new Map();for(const r of rs){const k=f(r);let g=m.get(k);if(!g)m.set(k,g={k,n:0,tok:0,out:0,c:0,sess:new Set(),models:{}});g.n++;g.tok+=tot(r);g.out+=r.o;const c=cost(r);g.c+=c;g.sess.add(r.s);const t=tier(r.model);g.models[t]=(g.models[t]||0)+c}return[...m.values()]}
+// smooth path through points
+function smooth(p){if(p.length<2)return'';let d=`M${p[0][0]},${p[0][1]}`;for(let i=0;i<p.length-1;i++){const a=p[i-1]||p[i],b=p[i],c=p[i+1],e=p[i+2]||c;const lo=Math.min(b[1],c[1]),hi=Math.max(b[1],c[1]),cl=v=>Math.max(lo,Math.min(hi,v));d+=`C${b[0]+(c[0]-a[0])/6},${cl(b[1]+(c[1]-a[1])/6)} ${c[0]-(e[0]-b[0])/6},${cl(c[1]-(e[1]-b[1])/6)} ${c[0]},${c[1]}`}return d}
+function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v||1))),n=v/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p}
+
+function buckets(rs){
+  const hourly=DAYS===1,fn=r=>{const d=new Date(r.t);if(hourly)d.setMinutes(0,0,0);else d.setHours(0,0,0,0);return+d};
+  const step=hourly?36e5:864e5,m=new Map();
+  for(const r of rs){const k=fn(r),o=m.get(k)||{tok:0,c:0,n:0,o:0,t:{}};const t=tier(r.model);o.n++;o.o+=r.o;o.tok+=tot(r);o.c+=cost(r);o.t[t]=(o.t[t]||0)+tot(r);m.set(k,o)}
+  const ks=[...m.keys()].sort((a,b)=>a-b),out=[];
+  for(let k=ks[0];k<=ks[ks.length-1];k+=step)out.push({k,...(m.get(k)||{tok:0,c:0,n:0,o:0,t:{}})});
+  return{list:out,hourly};
+}
+const lab=(k,h)=>{const d=new Date(k);return h?d.getHours()+':00':d.toLocaleDateString(undefined,{month:'short',day:'numeric'})};
+
+function areaChart(B,tiers){
+  const W=820,H=290,L=46,R=10,T=10,Bt=28,iw=W-L-R,ih=H-T-Bt,n=B.list.length;
+  const mx=niceMax(Math.max(...B.list.map(b=>b.tok))),x=i=>L+(n>1?i/(n-1):.5)*iw,y=v=>T+ih-v/mx*ih;
+  let acc=B.list.map(()=>0),paths='',defs='';
+  tiers.forEach((t,ti)=>{const top=B.list.map((b,i)=>acc[i]+(b.t[t]||0)),bot=acc.slice();
+    const up=smooth(top.map((v,i)=>[x(i),y(v)])),dn=smooth(bot.map((v,i)=>[x(i),y(v)]).reverse());
+    defs+=`<linearGradient id="ga${ti}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${COL[t]}" stop-opacity=".85"/><stop offset="1" stop-color="${COL[t]}" stop-opacity=".25"/></linearGradient>`;
+    paths+=`<path d="${up}L${x(n-1)},${y(bot[n-1])}${dn.replace(/^M[^C]*/,'')}Z" fill="url(#ga${ti})"/><path d="${up}" fill="none" stroke="${COL[t]}" stroke-width="2"/>`;acc=top});
+  let grid='';for(let i=0;i<=4;i++){const v=mx/4*i;grid+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff10"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`}
+  let xl='';const every=Math.max(1,Math.ceil(n/8));B.list.forEach((b,i)=>{if(i%every===0)xl+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${lab(b.k,B.hourly)}</text>`});
+  return`<svg class="chart" id="area" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${grid}${xl}<g class="reveal">${paths}</g><line id="cur" y1="${T}" y2="${T+ih}" stroke="#fff" stroke-opacity=".5" stroke-dasharray="3 3" style="display:none"/><rect x="${L}" y="${T}" width="${iw}" height="${ih}" fill="transparent" id="hit"/></svg>`;
+}
+function costLine(B){
+  const W=400,H=200,L=40,R=8,T=14,Bt=22,iw=W-L-R,ih=H-T-Bt;let s=0;const cum=B.list.map(b=>s+=b.c),mx=niceMax(s),n=cum.length;
+  const x=i=>L+(n>1?i/(n-1):.5)*iw,y=v=>T+ih-v/mx*ih,pts=cum.map((v,i)=>[x(i),y(v)]);
+  let grid='';for(let i=0;i<=3;i++){const v=mx/3*i;grid+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff10"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${sym()}${fmt(v*mult())}</text>`}
+  const d=smooth(pts);
+  return`<svg class="chart" viewBox="0 0 ${W} ${H}"><defs><linearGradient id="cg" x1="0" x2="1"><stop offset="0" stop-color="#e8743b"/><stop offset="1" stop-color="#f2b872"/></linearGradient><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b872" stop-opacity=".35"/><stop offset="1" stop-color="#f2b872" stop-opacity="0"/></linearGradient></defs>${grid}
+  <g class="reveal"><path d="${d}L${x(n-1)},${T+ih}L${x(0)},${T+ih}Z" fill="url(#cf)"/></g><path d="${d}" pathLength="1" class="draw" fill="none" stroke="url(#cg)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="${pts[n-1][0]}" cy="${pts[n-1][1]}" r="5" fill="#f2b872"><animate attributeName="r" values="4;8;4" dur="2s" repeatCount="indefinite"/></circle></svg>`;
+}
+function dailyBars(B){
+  const W=400,H=200,L=40,R=8,T=14,Bt=22,iw=W-L-R,ih=H-T-Bt,n=B.list.length,mx=niceMax(Math.max(...B.list.map(b=>b.c))),bw=iw/n;
+  let o='';for(let i=0;i<=3;i++){const v=mx/3*i,yy=T+ih-v/mx*ih;o+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="#ffffff10"/><text x="${L-6}" y="${yy+4}" text-anchor="end">${sym()}${fmt(v*mult())}</text>`}
+  B.list.forEach((b,i)=>{const h=b.c/mx*ih;o+=`<rect class="bar" data-t="${lab(b.k,B.hourly)}: ${usd(b.c)}" x="${L+i*bw+bw*.15}" y="${T+ih-h}" width="${bw*.7}" height="${Math.max(h,1)}" rx="${Math.min(4,bw/4)}" fill="url(#cg)" style="animation-delay:${i*25}ms"/>`});
+  return`<svg class="chart" id="dbars" viewBox="0 0 ${W} ${H}">${o}</svg>`;
+}
+function donut(items,total){
+  const R=70,C=2*Math.PI*R;let off=0;
+  const arcs=items.map((g,i)=>{const len=g.v/total*C,s=`<circle cx="95" cy="95" r="${R}" stroke="${g.col}" stroke-dasharray="0 ${C}" data-len="${Math.max(0,len-2)}" data-c="${C}" stroke-dashoffset="${-off}" style="--d:${i*.15}s" data-t="${g.n}: ${usd(g.v)} (${(g.v/total*100).toFixed(0)}%)"/>`;off+=len;return s}).join('');
+  return`<svg class="donut" viewBox="0 0 190 190"><circle cx="95" cy="95" r="${R}" stroke="#ffffff0a"/>${arcs}</svg>`;
+}
+function heatmap(rs){
+  const g=Array.from({length:7},()=>Array(24).fill(0));rs.forEach(r=>{const d=new Date(r.t);g[(d.getDay()+6)%7][d.getHours()]+=tot(r)});
+  const mx=Math.max(...g.flat())||1,days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];let o='<div></div>';
+  for(let h=0;h<24;h++)o+=`<div class="l" style="text-align:center">${h%3===0?h:''}</div>`;
+  g.forEach((row,d)=>{o+=`<div class="l">${days[d]}</div>`+row.map((v,h)=>`<div class="c" data-t="${days[d]} ${h}:00 · ${fmt(v)} tokens" style="opacity:${v?.12+.88*Math.sqrt(v/mx):.05};animation-delay:${(d*24+h)*2}ms"></div>`).join('')});
+  return`<div class="heat">${o}</div>`;
+}
+function spark(vals,col){const W=200,H=44,mx=Math.max(...vals)||1,n=vals.length,pts=vals.map((v,i)=>[n>1?i/(n-1)*W:W/2,H-4-v/mx*(H-8)]);
+  return`<svg class="sp" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${smooth(pts)}" pathLength="1" class="draw" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`}
+
+function render(){
+  const rs=recs(),app=$('#app');
+  $('#src').textContent=`${DATA.records.length.toLocaleString()} requests · ${DATA.files} transcripts · estimated API-equivalent cost · live`;
+  if(!rs.length){app.innerHTML='<div class="empty">No usage in this range.</div>';return}
+  const T={i:0,o:0,cr:0,cw:0,c:0};rs.forEach(r=>{T.i+=r.i;T.o+=r.o;T.cr+=r.cr;T.cw+=r.cw;T.c+=cost(r)});
+  const sess=new Set(rs.map(r=>r.s)).size,total=T.i+T.o+T.cr+T.cw,B=buckets(rs);
+  const byModel=group(rs,r=>r.model).sort((a,b)=>b.c-a.c),byTier=group(rs,r=>tier(r.model)).sort((a,b)=>b.c-a.c);
+  const byProj=group(rs,r=>r.p).sort((a,b)=>b.c-a.c).slice(0,7);
+  const tiers=['opus','fable','sonnet','haiku','other'].filter(t=>rs.some(r=>tier(r.model)===t));
+  const mix=[['Input',T.i,'#e8743b'],['Output',T.o,'#c76b8f'],['Cache write',T.cw,'#d9a441'],['Cache read',T.cr,'#f2b872']];
+  const cacheHit=T.cr/Math.max(1,T.cr+T.cw+T.i)*100,maxP=byProj[0].c||1;
+  app.innerHTML=`
+  ${limitsHTML()}
+  ${activityHTML()}
+  <div class="grid kpis">
+   <div class="card kpi"><h3>Tokens</h3><div class="v" id="k1">0</div><div class="s">${cacheHit.toFixed(0)}% served from cache</div>${spark(B.list.map(b=>b.tok),'#e8743b')}</div>
+   <div class="card kpi"><h3>Est. cost</h3><div class="v" id="k2">₹0</div><div class="s">${usd(T.c/Math.max(1,B.list.length*(B.hourly?1/24:1)))}/day avg</div>${spark(B.list.map(b=>b.c),'#f2b872')}</div>
+   <div class="card kpi"><h3>Requests</h3><div class="v" id="k3">0</div><div class="s">${sess} sessions</div>${spark(B.list.map(b=>b.n),'#c76b8f')}</div>
+  </div>
+  <div class="grid cols" style="margin-bottom:16px">
+   <div class="card"><h3>Token usage by model <span>hover to inspect</span></h3>${areaChart(B,tiers)}<div class="legend">${tiers.map(t=>`<span><b style="background:${COL[t]}"></b>${t}</span>`).join('')}</div></div>
+   <div class="card"><h3>Cost share by model</h3><div class="donutwrap">${donut(byTier.map(g=>({n:g.k,v:g.c,col:COL[g.k]})),T.c)}<div class="dl">${byTier.map(g=>`<div><b style="background:${COL[g.k]}"></b>${g.k}<span>${usd(g.c)}</span></div>`).join('')}</div></div></div>
+  </div>
+  <div class="grid cols2">
+   <div class="card"><h3>Cost per ${B.hourly?'hour':'day'}</h3>${dailyBars(B)}</div>
+   <div class="card"><h3>Cost by project</h3>${byProj.map(g=>`<div class="row"><div class="n">${g.k}</div><div class="tr"><i class="hbar" style="width:${g.c/maxP*100}%"></i></div><div class="val">${usd(g.c)}</div></div>`).join('')}</div>
+  </div>`;
+  stagger('.card',80);stagger('.row .hbar',60);
+  countUp($('#k1'),total,fmt);countUp($('#k2'),T.c,usd);countUp($('#k3'),rs.length,v=>Math.round(v).toLocaleString());
+  document.querySelectorAll('.ring[data-v]').forEach(c=>setTimeout(()=>c.setAttribute('stroke-dasharray',c.dataset.v+' 999'),200));tick();
+  requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll('.donut circle[data-len]').forEach(c=>c.setAttribute('stroke-dasharray',`${c.dataset.len} ${c.dataset.c}`)),150));
+  document.querySelectorAll('[data-t]').forEach(e=>hover(e,e.dataset.t));
+  const a=$('#area');if(a){const hit=$('#hit'),cur=$('#cur'),W=820,L=46,iw=W-L-10,n=B.list.length;
+    hover(hit,e=>{const r=a.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,i=Math.max(0,Math.min(n-1,Math.round((px-L)/iw*(n-1)))),b=B.list[i],xx=L+(n>1?i/(n-1):.5)*iw;cur.style.display='';cur.setAttribute('x1',xx);cur.setAttribute('x2',xx);
+      return lab(b.k,B.hourly)+'\n'+Object.entries(b.t).sort((p,q)=>q[1]-p[1]).map(([t,v])=>t+': '+fmt(v)).join('\n')+'\ncost: '+usd(b.c)});
+    hit.addEventListener('mouseleave',()=>cur.style.display='none')}
+  
+}
+
+// ---- Optimiser ----
+function advise(r){const t=tier(r.model);if(t==='haiku'||t==='other')return null;
+  const heavy=r.tools.some(x=>DATA.heavy.includes(x));
+  if(!heavy&&r.o<600&&!r.th)return'haiku';
+  if((t==='opus'||t==='fable')&&r.o<3500&&!r.tools.includes('Agent')&&!r.tools.includes('Task'))return'sonnet';return null}
+function optimise(){
+  const rs=recs();let cur=0,alt=0,moved=0;const flows={},projs={};
+  for(const r of rs){const c=cost(r);cur+=c;const tg=advise(r);if(!tg){alt+=c;continue}const c2=cost(r,tg);if(c2>=c){alt+=c;continue}
+    alt+=c2;moved++;const f=tier(r.model)+'→'+tg,F=flows[f]||(flows[f]={n:0,save:0,from:tier(r.model),to:tg});F.n++;F.save+=c-c2;
+    const P=projs[r.p]||(projs[r.p]={n:0,save:0});P.n++;P.save+=c-c2}
+  const save=cur-alt,pct=cur?save/cur*100:0,score=Math.round(100-pct);
+  const big=rs.filter(r=>['opus','fable'].includes(tier(r.model))),bigC=big.reduce((a,r)=>a+cost(r),0);
+  const cw=rs.reduce((a,r)=>a+r.cw,0),cr=rs.reduce((a,r)=>a+r.cr,0),th=rs.filter(r=>r.th&&tier(r.model)!=='haiku').length;
+  const fl=Object.values(flows).sort((a,b)=>b.save-a.save),pj=Object.entries(projs).sort((a,b)=>b[1].save-a[1].save).slice(0,6),mxS=fl[0]?fl[0].save:1,mxP=pj[0]?pj[0][1].save:1;
+  const tips=[];
+  if(big.length)tips.push(`<b>${(bigC/cur*100).toFixed(0)}% of spend</b> (${usd(bigC)}) went to Opus/Fable-class models over ${big.length.toLocaleString()} requests. Make a mid-tier model your default and step up only for architecture or hard debugging.`);
+  if(flows['opus→haiku']||flows['fable→haiku']||flows['sonnet→haiku'])tips.push('Many requests were just <b>short tool calls (read, search, run)</b>. Delegate exploration and file-reading to a Haiku subagent.');
+  if(flows['opus→sonnet']||flows['fable→sonnet'])tips.push('Moderate edits and answers (under 3.5K output tokens) are well within <b>Sonnet</b>. Plan with the big model, implement with Sonnet.');
+  if(cr>0&&cw/cr>.25)tips.push(`Cache writes are high (${fmt(cw)} vs ${fmt(cr)} read). Idle gaps expire the prompt cache; keep sessions focused.`);
+  if(th>rs.length*.3)tips.push('Over 30% of requests used extended thinking. Lower the effort setting for routine work.');
+  const R=52,C=2*Math.PI*R;
+  $('#panel').innerHTML=`<button class="x" onclick="closeM()">✕ Close</button>
+  <h2>⚡ Optimisation report</h2><div style="color:var(--mut)">${DAYS?'Last '+DAYS+' day(s)':'All time'} · ${rs.length.toLocaleString()} requests analysed</div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:18px 0">
+   <div class="card"><h3>Potential savings</h3><div class="big" style="color:#4ade80" id="o1">$0</div><div class="s" style="color:var(--mut)">${pct.toFixed(0)}% of ${usd(cur)}</div></div>
+   <div class="card"><h3>Could downshift</h3><div class="big" style="color:#f2b872" id="o2">0</div><div class="s" style="color:var(--mut)">${(moved/Math.max(1,rs.length)*100).toFixed(0)}% of requests</div></div>
+   <div class="card" style="display:flex;align-items:center;gap:16px"><svg width="110" height="110" viewBox="0 0 120 120" style="transform:rotate(-90deg)"><circle cx="60" cy="60" r="${R}" fill="none" stroke="#ffffff10" stroke-width="12"/><circle id="sc" cx="60" cy="60" r="${R}" fill="none" stroke="url(#cg)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 ${C}" style="transition:stroke-dasharray 1.6s cubic-bezier(.3,1,.3,1)" data-v="${C*score/100}" data-c="${C}"/></svg><div><h3 style="margin:0">Efficiency</h3><div class="big" id="o3">0</div></div></div></div>
+  <div class="sub">What you could have used instead</div>
+  ${fl.length?fl.map(f=>`<div class="row" style="grid-template-columns:190px 1fr 130px"><div><span class="chip" style="background:${COL[f.from]}">${f.from}</span> → <span class="chip" style="background:${COL[f.to]}">${f.to}</span></div><div class="tr"><i class="hbar" style="width:${f.save/mxS*100}%"></i></div><div class="val"><span style="color:#4ade80">${usd(f.save)}</span> · ${f.n.toLocaleString()} req</div></div>`).join(''):'<div class="rec">Nothing obvious to downshift. Your model choices look efficient.</div>'}
+  ${pj.length?`<div class="sub">Biggest opportunities by project</div>`+pj.map(([k,p])=>`<div class="row" style="grid-template-columns:190px 1fr 130px"><div class="n">${k}</div><div class="tr"><i class="hbar" style="width:${p.save/mxP*100}%"></i></div><div class="val"><span style="color:#4ade80">${usd(p.save)}</span> · ${p.n.toLocaleString()} req</div></div>`).join(''):''}
+  <div class="sub">Recommendations</div>${tips.map((t,i)=>`<div class="rec" style="animation-delay:${i*120+400}ms">${t}</div>`).join('')||'<div class="rec">No recommendations.</div>'}
+  <div class="note">Each request is scored by output size, extended thinking and tools used. Short turns with only read/search/run tools → Haiku; moderate turns without sub-agents or heavy edits on Opus/Fable → Sonnet. Costs are estimates from list prices (editable at the top of the script) and ignore quality, so try the cheaper tier on routine work first.</div>`;
+  $('#modal').classList.add('on');
+  countUp($('#o1'),save,usd,1600);countUp($('#o2'),moved,v=>Math.round(v).toLocaleString());countUp($('#o3'),score,v=>Math.round(v)+'%');
+  setTimeout(()=>{const s=$('#sc');s.setAttribute('stroke-dasharray',`${s.dataset.v} ${s.dataset.c}`)},200);
+}
+
+// ---- Limits ----
+const LIM_DEF={daily:60,weekly:300,dHour:0,wDay:1,wHour:0};
+let LIM=Object.assign({},LIM_DEF);try{Object.assign(LIM,JSON.parse(localStorage.getItem('limits2')||'{}'))}catch(e){}
+function windows(){const now=new Date(),d=new Date(now);d.setHours(+LIM.dHour,0,0,0);if(d>now)d.setDate(d.getDate()-1);
+  const w=new Date(now);w.setHours(+LIM.wHour,0,0,0);w.setDate(w.getDate()-((w.getDay()-LIM.wDay+7)%7));if(w>now)w.setDate(w.getDate()-7);
+  return[{k:'Daily',s:+d,e:+d+864e5,lim:+LIM.daily},{k:'Weekly',s:+w,e:+w+6048e5,lim:+LIM.weekly}]}
+const dur=ms=>{ms=Math.max(0,ms);const d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return(d?d+'d ':'')+(d||h?h+'h ':'')+m+'m'+(d?'':' '+String(s).padStart(2,'0')+'s')};
+const rtime=t=>new Date(t).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+const dkey=t=>{const d=new Date(t);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()};
+function activityHTML(){
+  const day=new Map();for(const r of DATA.records){const k=dkey(r.t),o=day.get(k)||{c:0,n:0};o.c+=cost(r);o.n++;day.set(k,o)}
+  const today=new Date();today.setHours(0,0,0,0);const WEEKS=20,start=new Date(today);start.setDate(start.getDate()-((today.getDay()+6)%7)-(WEEKS-1)*7);
+  const vals=[...day.values()].map(o=>o.c).sort((a,b)=>a-b),q=f=>vals[Math.floor((vals.length-1)*f)]||0,th=[q(.25),q(.5),q(.75)];
+  const lvl=c=>!c?0:c<=th[0]?1:c<=th[1]?2:c<=th[2]?3:4,AL=['','55','88','bb','ff'];
+  let cells='',i=0;for(let d=new Date(start);d<=today;d.setDate(d.getDate()+1),i++){
+    const o=day.get(dkey(d)),l=lvl(o?o.c:0),isT=+d===+today;
+    cells+=`<span class="${isT?'t':''}" data-t="${d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}\n${o?o.n+' requests · '+usd(o.c):'No activity'}" style="${l?'background:#d97757'+AL[l]+';':''}animation-delay:${i*5}ms"></span>`}
+  const has=k=>day.has(k);let streak=0,cur=new Date(today);if(!has(dkey(cur)))cur.setDate(cur.getDate()-1);while(has(dkey(cur))){streak++;cur.setDate(cur.getDate()-1)}
+  const ds=[...day.keys()].map(k=>{const[y,m,dd]=k.split('-');return+new Date(+y,+m,+dd)}).sort((a,b)=>a-b);let best=0,run=0;ds.forEach((t,j)=>{run=j&&Math.round((t-ds[j-1])/864e5)===1?run+1:1;best=Math.max(best,run)});
+  const act=ds.length,span=Math.round((today-ds[0])/864e5)+1;
+  return`<div class="card act"><h3>Active days <span>last ${WEEKS} weeks</span></h3><div class="actTop"><div><b>${streak}<i> 🔥</i></b>day streak</div><div><b>${best}</b>longest streak</div><div><b>${act}<small style="font-size:14px;color:var(--mut);font-weight:500"> / ${span}</small></b>days active</div></div>
+  <div class="cal">${cells}</div><div class="calLeg">Less ${AL.map((a,j)=>`<span style="background:${j?'#d97757'+a:'#ffffff0d'}"></span>`).join('')} More · outlined = today</div></div>`}
+function limitsHTML(){const now=Date.now();return'<div class="grid lims">'+windows().map(w=>{
+  const used=DATA.records.reduce((a,r)=>r.t>=w.s&&r.t<=now?a+cost(r):a,0),pct=used/w.lim*100,el=Math.max(1,now-w.s),proj=used/el*(w.e-w.s);
+  const col=pct>=100?'#ef4444':pct>=80?'#f59e0b':pct>=60?'#f2b872':'#e8743b',st=pct>=100?'Limit reached':proj>w.lim?'Pace exceeds limit':'On track',C=2*Math.PI*54;
+  return`<div class="card lim"><div style="position:relative"><svg viewBox="0 0 128 128"><circle cx="64" cy="64" r="54" stroke="#ffffff0f"/><circle class="ring" cx="64" cy="64" r="54" stroke="${col}" stroke-dasharray="0 999" data-v="${Math.min(1,pct/100)*C}"/></svg><div class="pc" style="color:${col}">${Math.round(pct)}%</div></div>
+  <div class="m"><h3 style="margin-bottom:6px">${w.k} limit <span class="chip" style="background:${col}">${st}</span></h3><div class="amt">${usd(used)} <small>of ${usd(w.lim)}</small></div>
+  <div class="rs">Resets in <b data-end="${w.e}">${dur(w.e-now)}</b><br>${rtime(w.e)}<br>Projected at this pace: ${usd(proj)}</div></div></div>`}).join('')+'</div>'}
+function tick(){document.querySelectorAll('[data-end]').forEach(e=>e.textContent=dur(+e.dataset.end-Date.now()))}
+setInterval(tick,1000);
+function openLimits(){const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],hrs=Array.from({length:24},(_,h)=>`<option value="${h}">${String(h).padStart(2,'0')}:00</option>`).join('');
+  $('#panel').innerHTML=`<button class="x" onclick="closeM()">✕ Close</button><h2>⚙ Usage limits</h2><div style="color:var(--mut)">Set the budget you want to stay under. Claude's own plan limits are not stored in your local logs, so these are your personal targets (shown in the currency you have selected).</div>
+  <div class="set"><div class="two"><div><label>Daily limit (${sym()})</label><input id="sd" type="number" min="1" value="${Math.round(LIM.daily*mult())}"></div><div><label>Weekly limit (${sym()})</label><input id="sw" type="number" min="1" value="${Math.round(LIM.weekly*mult())}"></div></div>
+  <div class="two"><div><label>Daily resets at</label><select id="sdh">${hrs}</select></div><div></div></div>
+  <div class="two"><div><label>Weekly resets on</label><select id="swd">${days.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select></div><div><label>Weekly resets at</label><select id="swh">${hrs}</select></div></div>
+  <button class="save2" id="saveL">Save limits</button></div>`;
+  $('#sdh').value=LIM.dHour;$('#swd').value=LIM.wDay;$('#swh').value=LIM.wHour;
+  $('#saveL').onclick=()=>{LIM={daily:+$('#sd').value/mult()||LIM.daily,weekly:+$('#sw').value/mult()||LIM.weekly,dHour:+$('#sdh').value,wDay:+$('#swd').value,wHour:+$('#swh').value};try{localStorage.setItem('limits2',JSON.stringify(LIM))}catch(e){}closeM();render()};
+  $('#modal').classList.add('on')}
+$('#limBtn').onclick=openLimits;
+function syncCur(){document.querySelectorAll('#curSel button').forEach(b=>b.classList.toggle('on',b.dataset.c===CUR))}
+$("#curSel").onclick=e=>{const b=e.target.closest('button');if(!b)return;CUR=b.dataset.c;try{localStorage.setItem('cur',CUR)}catch(x){}syncCur();if(DATA)render()};syncCur();
+
+// ---- Mascot ----
+(function(){
+  const pal=$('#pal');if(!pal||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const pL=$('#pL'),pR=$('#pR'),say=$('#say'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  let x=200,visible=false,busy=false;
+  const setX=v=>{x=v;pal.style.setProperty('--x',v+'px')};
+  const look=(dx,dy)=>{const t=`translate(${dx}px,${dy}px)`;pL.style.transform=t;pR.style.transform=t;pL.style.transition=pR.style.transition='transform .25s'};
+  const talk=async(t,ms=1500)=>{say.textContent=t;say.classList.add('on');await sleep(ms);say.classList.remove('on')};
+  const rnd=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
+  const maxX=()=>Math.max(120,innerWidth-140);
+  addEventListener('mousemove',e=>{if(!visible)return;const cx=x+40,cy=40,dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy)||1,k=Math.min(1,d/120);look(dx/d*3*k,dy/d*3*k)});
+  $('#body').addEventListener('click',async()=>{if(!visible)return;pal.classList.add('hop');setTimeout(()=>pal.classList.remove('hop'),650);talk(pick(['hi! 👋','eep!','got any tokens?','watching your spend 👀','tee-hee']),1600)});
+  async function loop(){
+    for(;;){
+      await sleep(rnd(2500,6000));
+      pal.classList.remove('in');visible=false;await sleep(300);
+      pal.classList.remove('slide');setX(rnd(20,maxX()));await sleep(60);
+      pal.classList.add('in');visible=true;await sleep(900);
+      const acts=Math.floor(rnd(2,5));
+      for(let i=0;i<acts;i++){
+        const a=Math.random();
+        if(a<.4){look(-3,0);await sleep(700);look(3,0);await sleep(800);look(0,-1);await sleep(400)}
+        else if(a<.7){pal.classList.add('slide','moving');setX(Math.max(10,Math.min(maxX(),x+rnd(-300,300))));await sleep(1500);pal.classList.remove('moving');await sleep(300)}
+        else if(a<.85){pal.classList.add('blink');await sleep(180);pal.classList.remove('blink');await sleep(350);pal.classList.add('blink');await sleep(180);pal.classList.remove('blink')}
+        else{pal.classList.add('hop');await talk(pick(['peek-a-boo!','hello 👋','nice usage!','psst… use Sonnet 😉']),1500);pal.classList.remove('hop')}
+        await sleep(rnd(400,1200));
+      }
+      pal.classList.remove('slide');
+    }
+  }
+  setX(innerWidth*.6);look(0,0);setTimeout(loop,1200);
+})();
+function closeM(){$('#modal').classList.remove('on')}
+$('#optBtn').onclick=optimise;
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeM()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+function movePill(){const b=$('#range .on'),p=$('#range .pill');p.style.left=b.offsetLeft+'px';p.style.width=b.offsetWidth+'px'}
+$('#range').onclick=e=>{const b=e.target.closest('button');if(!b)return;DAYS=+b.dataset.d;[...$('#range').querySelectorAll('button')].forEach(x=>x.classList.toggle('on',x===b));movePill();render()};
+async function load(){try{DATA=await (await fetch('/api/data')).json();if(DATA.records.length!==lastN){lastN=DATA.records.length;render()}}catch(e){$('#app').innerHTML='<div class="empty">Could not load data. Is the server running?</div>'}}
+movePill();load();setInterval(load,60000);
+</script></body></html>
