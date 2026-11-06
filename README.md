@@ -1,5 +1,9 @@
 # AI TokenOps Dashboard
 
+> **Free agent skill:** [Get TokenOps on Agensi](https://www.agensi.io/skills/tokenops-claude-usage-limits-and-savings). Ask your AI coding agent about your Claude Code spend, limits and savings in plain language.
+
+![TokenOps: track, limit and optimise your AI token spend](assets/tokenops-preview.png)
+
 **Track. Limit. Optimise your AI token spend.**
 
 Live demo: https://ajay-bobbili.github.io/ai-tokenops-dashboard/
