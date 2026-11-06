@@ -137,15 +137,15 @@ tr.a{animation:slide .6s both}@keyframes slide{from{opacity:0;transform:translat
 .brand .tag{font-size:13.5px;font-weight:600;color:var(--tx);opacity:.9;letter-spacing:.1px}.brand .st{font-size:11.5px;color:var(--mut)}
 .live.off{background:#6b6560;animation:none;box-shadow:none}.brand h1{margin-left:-1px}.brand .tag,.brand .st{margin-left:3px}
 .alert{border-radius:14px;padding:12px 16px;margin-bottom:16px;border:1px solid #f59e0b88;border-left:4px solid #f59e0b;background:#f59e0b14;animation:rise .7s both}.alert.red{border-color:#ef444488;border-left-color:#ef4444;background:#ef444414}.alert div{margin:2px 0}.alert b{color:var(--tx)}
-.cmp td:first-child{color:var(--mut)}.cmp td b{font-weight:700}.xopt{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:16px 0}.xopt .btn2{text-align:left}
+.cmp td:first-child{color:var(--mut)}.cmp td b{font-weight:700}body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}body.noanim .draw{stroke-dashoffset:0!important}
 .xchk{display:flex;align-items:center;gap:8px;margin:14px 0;color:var(--tx);cursor:pointer}.xchk input{accent-color:#e8743b;width:16px;height:16px}
 @media print{
 :root{--bg:#fff;--card:#fff;--tx:#111;--mut:#555;--line:#0002}
 *{animation:none!important;transition:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{background:#fff;color:#111}.bg,#pal,.modal,.tip,button,.seg,.gear,.opt,.credit,.live{display:none!important}
+body{background:#fff;color:#111}.bg,#pal,.modal,.tip,button,.seg,.gear,.opt,.credit,.live,#alBtn{display:none!important}
 .wrap{padding-top:10px!important}.card{background:#fff;border:1px solid #bbb;break-inside:avoid;page-break-inside:avoid;box-shadow:none;opacity:1;transform:none}
 .draw{stroke-dashoffset:0!important}svg text{fill:#444}.kpi .v,h1 span,.onb h2 span{background:none;-webkit-background-clip:border-box;color:#c2410c}
-.alert{background:#fff;color:#111}.row .tr{background:#0001}.row .tr i{background:#e8743b}
+.alert{background:#fff;color:#111}.card,.grid>*{break-inside:avoid;page-break-inside:avoid}svg{max-width:100%;height:auto}.row .tr{background:#0001}.row .tr i{background:#e8743b}
 }
 </style></head><body>
 <div class="bg"><i></i><i></i><i></i></div>
@@ -194,12 +194,12 @@ let CUR='INR';try{CUR=localStorage.getItem('cur')||'INR'}catch(e){}
 const mult=()=>CUR==='INR'?USD_INR:1,sym=()=>CUR==='INR'?'₹':'$';
 const usd=n=>{const v=n*mult();return sym()+(v>=100?Math.round(v).toLocaleString(CUR==='INR'?'en-IN':'en-US'):v.toFixed(2))};
 const tot=r=>r.i+r.o+r.cr+r.cw;
-let DATA=null,DAYS=30,lastN=-1;
+let DATA=null,DAYS=30,FROM=null,lastN=-1;
 const $=s=>document.querySelector(s),tip=$('#tip');
 const stagger=(sel,ms=70)=>document.querySelectorAll(sel).forEach((e,i)=>e.style.animationDelay=i*ms+'ms');
 function hover(el,txt){el.onmousemove=e=>{tip.style.display='block';tip.textContent=typeof txt==='function'?txt(e):txt;tip.style.left=Math.min(e.clientX+16,innerWidth-240)+'px';tip.style.top=e.clientY+16+'px'};el.onmouseleave=()=>tip.style.display='none'}
-function countUp(el,to,f,dur=1400){const t0=performance.now();(function s(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);el.textContent=f(to*e);if(p<1)requestAnimationFrame(s)})(t0)}
-function recs(){const from=DAYS?Date.now()-DAYS*864e5:0;return DATA.records.filter(r=>r.t>=from)}
+function countUp(el,to,f,dur=1400){if(document.body.classList.contains('noanim')){el.textContent=f(to);return}const t0=performance.now();(function s(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);el.textContent=f(to*e);if(p<1)requestAnimationFrame(s)})(t0)}
+function recs(from){if(from==null)from=FROM!=null?FROM:DAYS?Date.now()-DAYS*864e5:0;return DATA.records.filter(r=>r.t>=from)}
 function group(rs,f){const m=new Map();for(const r of rs){const k=f(r);let g=m.get(k);if(!g)m.set(k,g={k,n:0,tok:0,out:0,c:0,sess:new Set(),models:{}});g.n++;g.tok+=tot(r);g.out+=r.o;const c=cost(r);g.c+=c;g.sess.add(r.s);const t=tier(r.model);g.models[t]=(g.models[t]||0)+c}return[...m.values()]}
 // smooth path through points
 function smooth(p){if(p.length<2)return'';let d=`M${p[0][0]},${p[0][1]}`;for(let i=0;i<p.length-1;i++){const a=p[i-1]||p[i],b=p[i],c=p[i+1],e=p[i+2]||c;const lo=Math.min(b[1],c[1]),hi=Math.max(b[1],c[1]),cl=v=>Math.max(lo,Math.min(hi,v));d+=`C${b[0]+(c[0]-a[0])/6},${cl(b[1]+(c[1]-a[1])/6)} ${c[0]-(e[0]-b[0])/6},${cl(c[1]-(e[1]-b[1])/6)} ${c[0]},${c[1]}`}return d}
@@ -419,32 +419,48 @@ function toolsHTML(rs){const all=toolStats(rs),nt=all.find(g=>g.k==='(no tool)')
 const toolsCmpHTML=rs=>{const c=cmpHTML();return`<div class="grid ${c?'cols2':''}" style="margin-top:16px">${toolsHTML(rs)}${c}</div>`};
 
 // ---- Export ----
-let HIDEP=false;
+let HIDEP=false,XD=null,XF='csv';
 const ymd=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 function csvEsc(v){if(typeof v==='number')return String(v);let s=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return/[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
 const csv=(head,rows)=>[head,...rows].map(r=>r.map(csvEsc).join(',')).join('\r\n')+'\r\n';
 function aliases(rs){const m={};agg(rs,r=>[r.p]).forEach((g,i)=>m[g.k]='project-'+(i+1));return m}
-function expRows(kind,rs){const cc='est_cost_'+CUR,H=['requests','sessions','input_tokens','output_tokens','cache_read_tokens','cache_write_tokens','total_tokens',cc],
-  R=g=>[g.n,g.s.size,g.i,g.o,g.cr,g.cw,g.i+g.o+g.cr+g.cw,+(g.c*mult()).toFixed(4)];
-  if(kind==='daily')return{h:['date',...H],r:agg(rs,r=>[ymd(r.t)]).sort((a,b)=>a.k<b.k?-1:1).map(g=>[g.k,...R(g)])};
-  if(kind==='model')return{h:['model','tier',...H],r:agg(rs,r=>[r.model]).map(g=>[g.k,tier(g.k),...R(g)])};
-  if(kind==='project'){const al=HIDEP?aliases(rs):null;return{h:['project',...H],r:agg(rs,r=>[r.p]).map(g=>[al?al[g.k]:g.k,...R(g)])}}
-  return{h:['tool',...H],r:toolStats(rs).map(g=>[g.k,...R(g)])}}
+const XDUR=[['24h','Last 24 hours'],['7d','Last 7 days'],['30d','Last 30 days'],['month','This month'],['all','All time']];
+function xFrom(k,now=Date.now()){if(k==='24h')return now-864e5;if(k==='7d')return now-7*864e5;if(k==='30d')return now-30*864e5;if(k==='month'){const d=new Date(now);return new Date(d.getFullYear(),d.getMonth(),1).getTime()}return 0}
+const xDefault=()=>DAYS===1?'24h':DAYS===7?'7d':DAYS===30?'30d':'all';
+function expCSV(k,now=Date.now()){const rs=recs(xFrom(k,now)),hp=HIDEP?aliases(rs):null,cc='est_cost_'+CUR,
+  R=(s,n,g)=>[s,n,g.n,g.s.size,g.i,g.o,g.cr,g.cw,g.i+g.o+g.cr+g.cw,+(g.c*mult()).toFixed(4)],
+  Z={n:0,i:0,o:0,cr:0,cw:0,c:0,s:new Set()},rows=[];
+  rows.push(R('summary','total',agg(rs,()=>['t'])[0]||Z));
+  const dm=new Map(agg(rs,r=>[ymd(r.t)]).map(g=>[g.k,g]));
+  let st=xFrom(k,now);if(!st)st=rs.reduce((a,r)=>Math.min(a,r.t),now);
+  for(let d=new Date(new Date(st).getFullYear(),new Date(st).getMonth(),new Date(st).getDate());d<=new Date(now);d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){const key=ymd(d);rows.push(R('daily',key,dm.get(key)||Z))}
+  agg(rs,r=>[r.model]).forEach(g=>rows.push(R('model',g.k,g)));
+  agg(rs,r=>[r.p]).forEach(g=>rows.push(R('project',hp?hp[g.k]:g.k,g)));
+  toolStats(rs).forEach(g=>rows.push(R('tool',g.k,g)));
+  return{name:`tokenops-${k}-${ymd(now)}.csv`,text:'﻿'+csv(['section','name','requests','sessions','input_tokens','output_tokens','cache_read_tokens','cache_write_tokens','total_tokens',cc],rows),n:rs.length}}
 function download(name,text,mime){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type:mime}));a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
-function doExport(kind){const rs=recs(),day=ymd(Date.now());
-  if(kind==='json'){const o=x=>{const t=expRows(x,rs);return t.r.map(r=>Object.fromEntries(t.h.map((k,i)=>[k,r[i]])))},m=mets(rs);
-    download(`tokenops-summary-${day}.json`,JSON.stringify({app:'TokenOps',generated:new Date().toISOString(),range:DAYS?`last ${DAYS} days`:'all time',currency:CUR,note:'Estimated API-equivalent cost from list prices. Requests using several tools count toward each tool.',
-      totals:{requests:m.n,total_tokens:m.tok,['est_cost_'+CUR]:+(m.c*mult()).toFixed(4),cache_hit_pct:+m.hit.toFixed(2),opus_fable_cost_share_pct:+m.big.toFixed(2)},daily:o('daily'),byModel:o('model'),byProject:o('project'),byTool:o('tool')},null,2),'application/json');return}
-  const t=expRows(kind,rs);download(`tokenops-${kind==='daily'?'daily':'by-'+kind}-${day}.csv`,'﻿'+csv(t.h,t.r),'text/csv;charset=utf-8')}
-function doPrint(){const sw=[];if(HIDEP){const al=aliases(recs());document.querySelectorAll('[data-pn]').forEach(e=>{sw.push([e,e.textContent]);e.textContent=al[e.dataset.pn]||e.textContent})}
-  closeM();setTimeout(()=>{window.print();sw.forEach(([e,t])=>e.textContent=t)},350)}
+let pdfBusy=false;
+function doPDF(k){if(pdfBusy)return;pdfBusy=true;
+  const prev={d:DAYS,f:FROM},now=Date.now(),from=xFrom(k,now);
+  DAYS=k==='24h'?1:k==='7d'?7:k==='30d'?30:k==='month'?Math.max(1,Math.ceil((now-from)/864e5)):0;FROM=k==='month'?from:null;
+  closeM();document.body.classList.add('noanim');render();
+  if(HIDEP){const al=aliases(recs());document.querySelectorAll('[data-pn]').forEach(e=>{e.textContent=al[e.dataset.pn]||e.textContent})}
+  let done=false;const restore=()=>{if(done)return;done=true;removeEventListener('afterprint',restore);DAYS=prev.d;FROM=prev.f;document.body.classList.remove('noanim');render();pdfBusy=false};
+  addEventListener('afterprint',restore);setTimeout(restore,60000);
+  setTimeout(()=>{try{window.print()}catch(e){restore()}},600)}
+function doExport(){const k=$('#xdur').value,f=$('#xfmt').value;HIDEP=$('#xhide').checked;
+  if(f==='pdf'){doPDF(k);return}
+  const o=expCSV(k);download(o.name,o.text,'text/csv;charset=utf-8')}
 function openExport(){if(!DATA){return}
-  $('#panel').innerHTML=`<button class="x" onclick="closeM()">✕ Close</button><h2>⬇ Export</h2><div style="color:var(--mut)">${DAYS?'Last '+DAYS+' day(s)':'All time'} · amounts in ${CUR} (${sym()}) · estimated API-equivalent cost</div>
-  <div class="xopt"><button class="btn2" data-x="daily">CSV · daily</button><button class="btn2" data-x="model">CSV · by model</button><button class="btn2" data-x="project">CSV · by project</button><button class="btn2" data-x="tool">CSV · by tool</button><button class="btn2" data-x="json">JSON · summary</button></div>
+  XD=XD||xDefault();
+  $('#panel').innerHTML=`<button class="x" onclick="closeM()">✕ Close</button><h2>⬇ Export report</h2><div style="color:var(--mut)">Amounts in ${CUR} (${sym()}) · estimated API-equivalent cost</div>
+  <div class="set"><div class="two"><div><label>Duration</label><select id="xdur">${XDUR.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div><div><label>Format</label><select id="xfmt"><option value="csv">CSV (spreadsheet)</option><option value="pdf">PDF (print or save as PDF)</option></select></div></div></div>
   <label class="xchk"><input type="checkbox" id="xhide"${HIDEP?' checked':''}> Hide project names (project-1, project-2 by cost rank)</label>
-  <div class="btns" style="margin-top:6px"><button class="btn1" id="xprint">🖨 Print / save as PDF</button></div>
-  <div class="note">Files are generated in your browser and never uploaded. Text that starts with = + - or @ is prefixed with an apostrophe so spreadsheets do not run it as a formula.</div>`;
-  document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>doExport(b.dataset.x));$('#xhide').onchange=e=>HIDEP=e.target.checked;$('#xprint').onclick=doPrint;
+  <div class="btns" style="margin-top:6px"><button class="btn1" id="xgo"></button></div>
+  <div class="note">CSV and PDF are generated in your browser and never uploaded. PDF opens your browser's print dialog: choose "Save as PDF". In the CSV a request that used several tools counts toward each tool, and text starting with = + - or @ gets an apostrophe so spreadsheets do not run it as a formula.</div>`;
+  $('#xdur').value=XD;$('#xfmt').value=XF;
+  const sync=()=>{XD=$('#xdur').value;XF=$('#xfmt').value;$('#xgo').textContent=XF==='pdf'?'Create PDF':'Download CSV'};
+  $('#xdur').onchange=$('#xfmt').onchange=sync;sync();$('#xgo').onclick=doExport;
   $('#modal').classList.add('on')}
 function syncCur(){document.querySelectorAll('#curSel button').forEach(b=>b.classList.toggle('on',b.dataset.c===CUR))}
 $("#curSel").onclick=e=>{const b=e.target.closest('button');if(!b)return;CUR=b.dataset.c;try{localStorage.setItem('cur',CUR)}catch(x){}syncCur();if(DATA)render()};syncCur();
