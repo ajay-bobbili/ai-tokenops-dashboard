@@ -59,11 +59,11 @@ Open http://localhost:4317 (on Windows you can double-click `start.bat`). The se
 - Costs are estimates of the same usage at pay-per-token API prices, not your subscription bill. Edit `PRICES` and `USD_INR` at the top of the script in `public/index.html`.
 - Claude's own plan limits are not stored in local logs, so the limits are targets you configure under **⚙ Limits**.
 - Only Claude Code activity is visible, not the claude.ai chat app.
-- The logo and mascot are hand-drawn imitations. Claude and Anthropic marks belong to Anthropic.
+- The logo and mascot ("Tokie", the chip bot) are original artwork. Claude and Claude Code are trademarks of Anthropic, PBC.
 
 ## Credits
 
-- Unofficial project, not affiliated with Anthropic. Claude and Claude Code are trademarks of [Anthropic, PBC](https://www.anthropic.com); the logo and mascot here are fan-made.
+- Unofficial project, not affiliated with Anthropic. Claude and Claude Code are trademarks of [Anthropic, PBC](https://www.anthropic.com).
 - Usage data comes from the session logs written by [Claude Code](https://claude.com/claude-code).
 - Built with Claude Code by [@ajay-bobbili](https://github.com/ajay-bobbili).
 
