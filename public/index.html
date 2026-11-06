@@ -137,7 +137,7 @@ tr.a{animation:slide .6s both}@keyframes slide{from{opacity:0;transform:translat
 .brand .tag{font-size:13.5px;font-weight:600;color:var(--tx);opacity:.9;letter-spacing:.1px}.brand .st{font-size:11.5px;color:var(--mut)}
 .live.off{background:#6b6560;animation:none;box-shadow:none}.brand h1{margin-left:-1px}.brand .tag,.brand .st{margin-left:3px}
 .alert{border-radius:14px;padding:12px 16px;margin-bottom:16px;border:1px solid #f59e0b88;border-left:4px solid #f59e0b;background:#f59e0b14;animation:rise .7s both}.alert.red{border-color:#ef444488;border-left-color:#ef4444;background:#ef444414}.alert div{margin:2px 0}.alert b{color:var(--tx)}
-.cmp td:first-child{color:var(--mut)}.cmp td b{font-weight:700}body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}body.noanim .draw{stroke-dashoffset:0!important}
+.cmp td:first-child{color:var(--mut)}.cmp td b{font-weight:700}
 .xchk{display:flex;align-items:center;gap:8px;margin:14px 0;color:var(--tx);cursor:pointer}.xchk input{accent-color:#e8743b;width:16px;height:16px}
 @media print{
 :root{--bg:#fff;--card:#fff;--tx:#111;--mut:#555;--line:#0002}
@@ -192,12 +192,12 @@ let CUR='INR';try{CUR=localStorage.getItem('cur')||'INR'}catch(e){}
 const mult=()=>CUR==='INR'?USD_INR:1,sym=()=>CUR==='INR'?'₹':'$';
 const usd=n=>{const v=n*mult();return sym()+(v>=100?Math.round(v).toLocaleString(CUR==='INR'?'en-IN':'en-US'):v.toFixed(2))};
 const tot=r=>r.i+r.o+r.cr+r.cw;
-let DATA=null,DAYS=30,FROM=null,lastN=-1;
+let DATA=null,DAYS=30,lastN=-1;
 const $=s=>document.querySelector(s),tip=$('#tip');
 const stagger=(sel,ms=70)=>document.querySelectorAll(sel).forEach((e,i)=>e.style.animationDelay=i*ms+'ms');
 function hover(el,txt){el.onmousemove=e=>{tip.style.display='block';tip.textContent=typeof txt==='function'?txt(e):txt;tip.style.left=Math.min(e.clientX+16,innerWidth-240)+'px';tip.style.top=e.clientY+16+'px'};el.onmouseleave=()=>tip.style.display='none'}
-function countUp(el,to,f,dur=1400){if(document.body.classList.contains('noanim')){el.textContent=f(to);return}const t0=performance.now();(function s(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);el.textContent=f(to*e);if(p<1)requestAnimationFrame(s)})(t0)}
-function recs(from){if(from==null)from=FROM!=null?FROM:DAYS?Date.now()-DAYS*864e5:0;return DATA.records.filter(r=>r.t>=from)}
+function countUp(el,to,f,dur=1400){const t0=performance.now();(function s(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);el.textContent=f(to*e);if(p<1)requestAnimationFrame(s)})(t0)}
+function recs(from){if(from==null)from=DAYS?Date.now()-DAYS*864e5:0;return DATA.records.filter(r=>r.t>=from)}
 function group(rs,f){const m=new Map();for(const r of rs){const k=f(r);let g=m.get(k);if(!g)m.set(k,g={k,n:0,tok:0,out:0,c:0,sess:new Set(),models:{}});g.n++;g.tok+=tot(r);g.out+=r.o;const c=cost(r);g.c+=c;g.sess.add(r.s);const t=tier(r.model);g.models[t]=(g.models[t]||0)+c}return[...m.values()]}
 // smooth path through points
 function smooth(p){if(p.length<2)return'';let d=`M${p[0][0]},${p[0][1]}`;for(let i=0;i<p.length-1;i++){const a=p[i-1]||p[i],b=p[i],c=p[i+1],e=p[i+2]||c;const lo=Math.min(b[1],c[1]),hi=Math.max(b[1],c[1]),cl=v=>Math.max(lo,Math.min(hi,v));d+=`C${b[0]+(c[0]-a[0])/6},${cl(b[1]+(c[1]-a[1])/6)} ${c[0]-(e[0]-b[0])/6},${cl(c[1]-(e[1]-b[1])/6)} ${c[0]},${c[1]}`}return d}
@@ -301,21 +301,23 @@ function advise(r){const t=tier(r.model);if(t==='haiku'||t==='other')return null
   const heavy=r.tools.some(x=>DATA.heavy.includes(x));
   if(!heavy&&r.o<600&&!r.th)return'haiku';
   if((t==='opus'||t==='fable')&&r.o<3500&&!r.tools.includes('Agent')&&!r.tools.includes('Task'))return'sonnet';return null}
-function optimise(){
-  const rs=recs();let cur=0,alt=0,moved=0;const flows={},projs={};
+function optData(rs){let cur=0,alt=0,moved=0;const flows={},projs={};
   for(const r of rs){const c=cost(r);cur+=c;const tg=advise(r);if(!tg){alt+=c;continue}const c2=cost(r,tg);if(c2>=c){alt+=c;continue}
     alt+=c2;moved++;const f=tier(r.model)+'→'+tg,F=flows[f]||(flows[f]={n:0,save:0,from:tier(r.model),to:tg});F.n++;F.save+=c-c2;
     const P=projs[r.p]||(projs[r.p]={n:0,save:0});P.n++;P.save+=c-c2}
   const save=cur-alt,pct=cur?save/cur*100:0,score=Math.round(100-pct);
   const big=rs.filter(r=>['opus','fable'].includes(tier(r.model))),bigC=big.reduce((a,r)=>a+cost(r),0);
   const cw=rs.reduce((a,r)=>a+r.cw,0),cr=rs.reduce((a,r)=>a+r.cr,0),th=rs.filter(r=>r.th&&tier(r.model)!=='haiku').length;
-  const fl=Object.values(flows).sort((a,b)=>b.save-a.save),pj=Object.entries(projs).sort((a,b)=>b[1].save-a[1].save).slice(0,6),mxS=fl[0]?fl[0].save:1,mxP=pj[0]?pj[0][1].save:1;
+  const fl=Object.values(flows).sort((a,b)=>b.save-a.save),pj=Object.entries(projs).sort((a,b)=>b[1].save-a[1].save).slice(0,6);
   const tips=[];
   if(big.length)tips.push(`<b>${(bigC/cur*100).toFixed(0)}% of spend</b> (${usd(bigC)}) went to Opus/Fable-class models over ${big.length.toLocaleString()} requests. Make a mid-tier model your default and step up only for architecture or hard debugging.`);
   if(flows['opus→haiku']||flows['fable→haiku']||flows['sonnet→haiku'])tips.push('Many requests were just <b>short tool calls (read, search, run)</b>. Delegate exploration and file-reading to a Haiku subagent.');
   if(flows['opus→sonnet']||flows['fable→sonnet'])tips.push('Moderate edits and answers (under 3.5K output tokens) are well within <b>Sonnet</b>. Plan with the big model, implement with Sonnet.');
   if(cr>0&&cw/cr>.25)tips.push(`Cache writes are high (${fmt(cw)} vs ${fmt(cr)} read). Idle gaps expire the prompt cache; keep sessions focused.`);
   if(th>rs.length*.3)tips.push('Over 30% of requests used extended thinking. Lower the effort setting for routine work.');
+  return{cur,moved,save,pct,score,fl,pj,tips}}
+function optimise(){
+  const rs=recs(),{cur,moved,save,pct,score,fl,pj,tips}=optData(rs),mxS=fl[0]?fl[0].save:1,mxP=pj[0]?pj[0][1].save:1;
   const R=52,C=2*Math.PI*R;
   $('#panel').innerHTML=`<button class="x" onclick="closeM()">✕ Close</button>
   <h2>⚡ Optimisation report</h2><div style="color:var(--mut)">${DAYS?'Last '+DAYS+' day(s)':'All time'} · ${rs.length.toLocaleString()} requests analysed</div>
@@ -402,11 +404,13 @@ function agg(rs,kf){const m=new Map();for(const r of rs)for(const k of kf(r)){le
 const toolStats=rs=>agg(rs,r=>{const t=[...new Set(r.tools||[])];return t.length?t:['(no tool)']});
 function mets(rs){let c=0,tok=0,i=0,cr=0,cw=0,big=0;for(const r of rs){const x=cost(r);c+=x;tok+=tot(r);i+=r.i;cr+=r.cr;cw+=r.cw;if(tier(r.model)==='opus'||tier(r.model)==='fable')big+=x}
   return{c,tok,n:rs.length,hit:cr/Math.max(1,cr+cw+i)*100,big:c?big/c*100:0}}
+const CMPROWS=[['Est. cost',usd,'c',0,0],['Tokens',fmt,'tok',0,0],['Requests',v=>Math.round(v).toLocaleString(),'n',0,null],['Cache hit',v=>v.toFixed(1)+'%','hit',1,1],['Share of spend on opus/fable',v=>v.toFixed(1)+'%','big',1,0]];
+function cmpDelta(a,b,k,pp){const diff=a[k]-b[k],base=b[k];if(!pp&&!(base>0))return{t:'n/a'};if(Math.abs(diff)<(pp?.05:1e-9))return{t:'no change'};return{up:diff>0,t:pp?Math.abs(diff).toFixed(1)+' pp':Math.abs(diff/base*100).toFixed(1)+'%'}}
 function cmpHTML(){if(!DAYS)return'';const now=Date.now(),a=mets(recs()),pv=DATA.records.filter(r=>r.t>=now-2*DAYS*864e5&&r.t<now-DAYS*864e5),b=mets(pv),has=pv.length>0;
-  const rows=[['Est. cost',usd,'c',0,0],['Tokens',fmt,'tok',0,0],['Requests',v=>Math.round(v).toLocaleString(),'n',0,null],['Cache hit',v=>v.toFixed(1)+'%','hit',1,1],['Share of spend on opus/fable',v=>v.toFixed(1)+'%','big',1,0]];
+  const rows=CMPROWS;
   const dl=([n,f,k,pp,good])=>{let d='<span style="color:var(--mut)">no earlier data</span>';
-    if(has){const diff=a[k]-b[k],base=b[k];if(!pp&&!(base>0))d='<span style="color:var(--mut)">n/a</span>';else if(Math.abs(diff)<(pp?.05:1e-9))d='<span style="color:var(--mut)">no change</span>';
-      else{const up=diff>0,col=good===null?'var(--mut)':up===!!good?'#4ade80':'#ff5a36';d=`<span style="color:${col};font-weight:700">${up?'▲':'▼'} ${pp?Math.abs(diff).toFixed(1)+' pp':Math.abs(diff/base*100).toFixed(1)+'%'}</span>`}}
+    if(has){const x=cmpDelta(a,b,k,pp);if(x.up===undefined)d=`<span style="color:var(--mut)">${x.t}</span>`;
+      else{const up=x.up,col=good===null?'var(--mut)':up===!!good?'#4ade80':'#ff5a36';d=`<span style="color:${col};font-weight:700">${up?'▲':'▼'} ${x.t}</span>`}}
     return`<tr><td>${n}</td><td class="r"><b>${f(a[k])}</b></td><td class="r">${has?f(b[k]):'-'}</td><td class="r">${d}</td></tr>`};
   const d0=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});
   return`<div class="card cmp"><h3>Compared with the previous ${DAYS} day${DAYS>1?'s':''}</h3><table><tr><th>Metric</th><th class="r">Now</th><th class="r">Previous</th><th class="r">Change</th></tr>${rows.map(dl).join('')}</table>
@@ -419,43 +423,72 @@ const toolsCmpHTML=rs=>{const c=cmpHTML();return`<div class="grid ${c?'cols2':''
 // ---- Export ----
 let HIDEP=false,XD=null,XF='csv';
 const ymd=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const ymdhm=t=>{const d=new Date(t);return ymd(t)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function csvEsc(v){if(typeof v==='number')return String(v);let s=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return/[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
-const csv=(head,rows)=>[head,...rows].map(r=>r.map(csvEsc).join(',')).join('\r\n')+'\r\n';
 function aliases(rs){const m={};agg(rs,r=>[r.p]).forEach((g,i)=>m[g.k]='project-'+(i+1));return m}
 const XDUR=[['24h','Last 24 hours'],['7d','Last 7 days'],['30d','Last 30 days'],['month','This month'],['all','All time']];
 function xFrom(k,now=Date.now()){if(k==='24h')return now-864e5;if(k==='7d')return now-7*864e5;if(k==='30d')return now-30*864e5;if(k==='month'){const d=new Date(now);return new Date(d.getFullYear(),d.getMonth(),1).getTime()}return 0}
 const xDefault=()=>DAYS===1?'24h':DAYS===7?'7d':DAYS===30?'30d':'all';
-function expCSV(k,now=Date.now()){const rs=recs(xFrom(k,now)),hp=HIDEP?aliases(rs):null,cc='est_cost_'+CUR,
-  R=(s,n,g)=>[s,n,g.n,g.s.size,g.i,g.o,g.cr,g.cw,g.i+g.o+g.cr+g.cw,+(g.c*mult()).toFixed(4)],
-  Z={n:0,i:0,o:0,cr:0,cw:0,c:0,s:new Set()},rows=[];
-  rows.push(R('summary','total',agg(rs,()=>['t'])[0]||Z));
-  const dm=new Map(agg(rs,r=>[ymd(r.t)]).map(g=>[g.k,g]));
+// One report model, rendered both as CSV and as PDF. Numbers are plain numbers; dp/dpr give display decimals for the PDF.
+function buildReport(k,hide,now=Date.now()){
+  const rs=recs(xFrom(k,now)),cc=' ('+CUR+')',cv=c=>+(c*mult()).toFixed(2),gt=g=>g.i+g.o+g.cr+g.cw,
+    Z={n:0,i:0,o:0,cr:0,cw:0,c:0,s:new Set()},tg=agg(rs,()=>['t'])[0]||Z,sh=(c,t)=>t?+(c/t*100).toFixed(1):0,secs=[],M=mets(rs);
   let st=xFrom(k,now);if(!st)st=rs.reduce((a,r)=>Math.min(a,r.t),now);
-  for(let d=new Date(new Date(st).getFullYear(),new Date(st).getMonth(),new Date(st).getDate());d<=new Date(now);d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)){const key=ymd(d);rows.push(R('daily',key,dm.get(key)||Z))}
-  agg(rs,r=>[r.model]).forEach(g=>rows.push(R('model',g.k,g)));
-  agg(rs,r=>[r.p]).forEach(g=>rows.push(R('project',hp?hp[g.k]:g.k,g)));
-  toolStats(rs).forEach(g=>rows.push(R('tool',g.k,g)));
-  return{name:`tokenops-${k}-${ymd(now)}.csv`,text:'﻿'+csv(['section','name','requests','sessions','input_tokens','output_tokens','cache_read_tokens','cache_write_tokens','total_tokens',cc],rows),n:rs.length}}
+  const dm=new Map(agg(rs,r=>[ymd(r.t)]).map(g=>[g.k,g])),days=[];
+  const s0=new Date(st),end=new Date(now);for(let d=new Date(s0.getFullYear(),s0.getMonth(),s0.getDate());d<=end;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1))days.push(ymd(d));
+  const label=XDUR.find(x=>x[0]===k)[1],per=days.length||1;
+  secs.push({title:'Summary',columns:['Metric','Value'],dpr:[2,0,0,0,1,0,2,0],rows:[['Estimated cost'+cc,cv(tg.c)],['Tokens',gt(tg)],['Requests',tg.n],['Sessions',tg.s.size],['Cache hit %',+M.hit.toFixed(1)],['Output tokens',tg.o],['Average cost per day'+cc,cv(tg.c/per)],['Active days in period',dm.size]]});
+  const lw=winStats().filter(x=>x.w.lim>0);
+  if(lw.length)secs.push({title:'Limits right now',columns:['Limit','Used'+cc,'Limit amount'+cc,'% used','Resets at','Status'],dp:[0,2,2,1],rows:lw.map(x=>[x.w.k,cv(x.used),cv(x.w.lim),+x.pct.toFixed(1),ymdhm(x.w.e),x.pct>=100?'Limit reached':x.proj>x.w.lim?'Pace exceeds limit':'On track'])});
+  const tab=(title,first,groups,nm)=>groups.length&&secs.push({title,columns:[first,'Requests','Tokens','Cost'+cc,'Share %'],dp:[0,0,0,2,1],rows:groups.map(g=>[nm(g.k),g.n,gt(g),cv(g.c),sh(g.c,tg.c)])});
+  tab('Cost by model','Model',agg(rs,r=>[r.model]),x=>x);
+  const al=hide?aliases(rs):null;tab('Cost by project','Project',agg(rs,r=>[r.p]),x=>al?al[x]:x);
+  const tl=toolStats(rs);if(tl.length)secs.push({title:'Tools used',columns:['Tool','Requests','Cost'+cc],dp:[0,0,2],rows:tl.map(g=>[g.k,g.n,cv(g.c)]),note:'A request that used several tools counts toward each of them, so rows add up to more than the total.'});
+  if(rs.length)secs.push({title:'Daily breakdown',columns:['Date','Requests','Tokens','Cost'+cc],dp:[0,0,0,2],rows:days.map(d=>{const g=dm.get(d)||Z;return[d,g.n,gt(g),cv(g.c)]})});
+  if(rs.length){const o=optData(rs),pl=t=>t.replace(/<[^>]+>/g,'');
+    secs.push({title:'Savings opportunities',lead:`Potential savings: ${cv(o.save).toFixed(2)} ${CUR} (${o.pct.toFixed(0)}% of ${cv(o.cur).toFixed(2)} ${CUR} estimated cost), if routine requests had used a cheaper model.`,columns:['Used model','Could use','Requests','Saves'+cc],dp:[0,0,0,2],rows:o.fl.map(f=>[f.from,f.to,f.n,cv(f.save)]),note:o.fl.length?'':'Nothing obvious to downshift. Your model choices look efficient.'});
+    if(o.tips.length)secs.push({title:'Recommendations',columns:['Recommendation'],rows:o.tips.map(t=>[pl(t)])})}
+  const D={'24h':1,'7d':7,'30d':30}[k];
+  if(D){const pv=DATA.records.filter(r=>r.t>=now-2*D*864e5&&r.t<now-D*864e5);
+    if(pv.length){const b=mets(pv),R=[['Est. cost'+cc,'c',0,2,x=>cv(x)],['Tokens','tok',0,0,x=>x],['Requests','n',0,0,x=>x],['Cache hit %','hit',1,1,x=>+x.toFixed(1)],['Share of spend on opus/fable %','big',1,1,x=>+x.toFixed(1)]];
+      secs.push({title:'Compared with the previous period',columns:['Metric','Now','Previous','Change'],dpr:R.map(r=>r[3]),rows:R.map(([n,key,pp,,f])=>{const x=cmpDelta(M,b,key,pp);return[n,f(M[key]),f(b[key]),x.up===undefined?x.t:(x.up?'Up ':'Down ')+x.t]}),note:`Now: last ${D} day${D>1?'s':''}. Previous: the ${D} day${D>1?'s':''} before that.`})}}
+  return{period:`${label}: ${ymd(st)} to ${ymd(now)}`,label,generated:ymdhm(Date.now()),
+    currency:`All costs are estimates at API list prices in ${CUR}, not a bill.`,sections:secs,
+    footer:['Unofficial project, not affiliated with Anthropic. Claude and Claude Code are trademarks of Anthropic, PBC. Credits go to the respective owners.','Generated in your browser; nothing was uploaded.']}}
+function reportCSV(rep){const L=[['TokenOps report'],['Period',rep.period],['Generated',rep.generated],['Note',rep.currency],[]];
+  for(const s of rep.sections){L.push([s.title.toUpperCase()]);if(s.lead)L.push([s.lead]);
+    if(s.rows.length){L.push(s.columns);s.rows.forEach(r=>L.push(r))}if(s.note)L.push([s.note]);L.push([])}
+  rep.footer.forEach(f=>L.push([f]));
+  return'﻿'+L.map(r=>r.map(csvEsc).join(',')).join('\r\n')+'\r\n'}
+function reportHTML(rep){
+  const fmtC=(s,ri,ci,v)=>{if(typeof v!=='number')return esc(v);const dp=(s.dpr?s.dpr[ri]:s.dp&&s.dp[ci])||0;return v.toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp})};
+  const sec=s=>{const num=s.columns.map((c,ci)=>s.rows.some(r=>typeof r[ci]==='number'));
+    return`<section><h2>${esc(s.title)}</h2>${s.lead?`<p class="lead">${esc(s.lead)}</p>`:''}${s.rows.length?`<table><thead><tr>${s.columns.map((c,ci)=>`<th${num[ci]?' class="r"':''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${s.rows.map((r,ri)=>`<tr>${r.map((v,ci)=>`<td${num[ci]?' class="r"':''}>${fmtC(s,ri,ci,v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`:''}${s.note?`<p class="note">${esc(s.note)}</p>`:''}</section>`};
+  const logo='<svg viewBox="0 0 24 24" width="38" height="38"><path d="M6.34 17.66A8 8 0 1 1 17.66 17.66" fill="none" stroke="#e8743b" stroke-width="2.6" stroke-linecap="round"/><path d="M8.5 9.5h7v1.9h-2.5v5h-2v-5H8.5z" fill="#1a1816"/></svg>';
+  return`<!doctype html><html><head><meta charset="utf-8"><title>TokenOps report</title><style>
+@page{size:A4 portrait;margin:16mm 14mm}*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#1a1816;font:12px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+header{display:flex;align-items:center;gap:12px;border-bottom:2px solid #e8743b;padding-bottom:10px;margin-bottom:6px}header h1{margin:0;font-size:22px}header .p{font-size:13px;font-weight:600}header .m{color:#6b6560;font-size:11px}
+.cur{color:#6b6560;margin:6px 0 4px}section{margin-top:16px}h2{margin:0 0 6px;font-size:14px;color:#c2410c;break-after:avoid;page-break-after:avoid}
+table{width:100%;border-collapse:collapse}th,td{padding:5px 8px;text-align:left;vertical-align:top}th{background:#f1ebe4;font-size:11px;border-bottom:1px solid #d6cdc3}tr{break-inside:avoid;page-break-inside:avoid}tbody tr:nth-child(even) td{background:#faf7f3}.r{text-align:right;font-variant-numeric:tabular-nums}
+.lead{margin:0 0 6px;font-weight:600}.note{color:#6b6560;font-size:11px;margin:5px 0 0}footer{margin-top:22px;border-top:1px solid #d6cdc3;padding-top:8px;color:#6b6560;font-size:10px}footer p{margin:2px 0}
+</style></head><body><header>${logo}<div><h1>TokenOps report</h1><div class="p">${esc(rep.period)}</div><div class="m">Generated ${esc(rep.generated)}</div></div></header>
+<div class="cur">${esc(rep.currency)}</div>${rep.sections.map(sec).join('')}<footer>${rep.footer.map(f=>`<p>${esc(f)}</p>`).join('')}</footer></body></html>`}
 function download(name,text,mime){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type:mime}));a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
-let pdfBusy=false;
-function doPDF(k){if(pdfBusy)return;pdfBusy=true;
-  const prev={d:DAYS,f:FROM},now=Date.now(),from=xFrom(k,now);
-  DAYS=k==='24h'?1:k==='7d'?7:k==='30d'?30:k==='month'?Math.max(1,Math.ceil((now-from)/864e5)):0;FROM=k==='month'?from:null;
-  closeM();document.body.classList.add('noanim');render();
-  if(HIDEP){const al=aliases(recs());document.querySelectorAll('[data-pn]').forEach(e=>{e.textContent=al[e.dataset.pn]||e.textContent})}
-  let done=false;const restore=()=>{if(done)return;done=true;removeEventListener('afterprint',restore);DAYS=prev.d;FROM=prev.f;document.body.classList.remove('noanim');render();pdfBusy=false};
-  addEventListener('afterprint',restore);setTimeout(restore,60000);
-  setTimeout(()=>{try{window.print()}catch(e){restore()}},600)}
-function doExport(){const k=$('#xdur').value,f=$('#xfmt').value;HIDEP=$('#xhide').checked;
-  if(f==='pdf'){doPDF(k);return}
-  const o=expCSV(k);download(o.name,o.text,'text/csv;charset=utf-8')}
+function printReport(html){const f=document.createElement('iframe');f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  let done=false;const clean=()=>{if(done)return;done=true;removeEventListener('afterprint',clean);f.remove()};
+  f.onload=()=>{const w=f.contentWindow;try{w.addEventListener('afterprint',clean);w.focus();w.print()}catch(e){clean()}};
+  addEventListener('afterprint',clean);setTimeout(clean,60000);f.srcdoc=html;document.body.appendChild(f);return f}
+function doExport(){const k=$('#xdur').value,f=$('#xfmt').value;HIDEP=$('#xhide').checked;const rep=buildReport(k,HIDEP);
+  if(f==='pdf'){closeM();printReport(reportHTML(rep));return}
+  download(`tokenops-report-${k}-${ymd(Date.now())}.csv`,reportCSV(rep),'text/csv;charset=utf-8')}
 function openExport(){if(!DATA){return}
   XD=XD||xDefault();
   $('#panel').innerHTML=`<button class="x" onclick="closeM()">✕ Close</button><h2>⬇ Export report</h2><div style="color:var(--mut)">Amounts in ${CUR} (${sym()}) · estimated API-equivalent cost</div>
   <div class="set"><div class="two"><div><label>Duration</label><select id="xdur">${XDUR.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div><div><label>Format</label><select id="xfmt"><option value="csv">CSV (spreadsheet)</option><option value="pdf">PDF (print or save as PDF)</option></select></div></div></div>
   <label class="xchk"><input type="checkbox" id="xhide"${HIDEP?' checked':''}> Hide project names (project-1, project-2 by cost rank)</label>
   <div class="btns" style="margin-top:6px"><button class="btn1" id="xgo"></button></div>
-  <div class="note">CSV and PDF are generated in your browser and never uploaded. PDF opens your browser's print dialog: choose "Save as PDF". In the CSV a request that used several tools counts toward each tool, and text starting with = + - or @ gets an apostrophe so spreadsheets do not run it as a formula.</div>`;
+  <div class="note">CSV and PDF contain the same report: summary, limits, cost by model, project and tool, daily breakdown, savings tips and a comparison with the previous period. Both are generated in your browser and never uploaded. PDF opens your browser's print dialog: choose "Save as PDF". In the tools table a request that used several tools counts toward each tool.</div>`;
   $('#xdur').value=XD;$('#xfmt').value=XF;
   const sync=()=>{XD=$('#xdur').value;XF=$('#xfmt').value;$('#xgo').textContent=XF==='pdf'?'Create PDF':'Download CSV'};
   $('#xdur').onchange=$('#xfmt').onchange=sync;sync();$('#xgo').onclick=doExport;
