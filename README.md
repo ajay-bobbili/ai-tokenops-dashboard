@@ -4,6 +4,8 @@
 
 Live demo: https://ajay-bobbili.github.io/ai-tokenops-dashboard/
 
+**Free agent skill:** get [TokenOps on Agensi](https://www.agensi.io/skills/tokenops-claude-usage-limits-and-savings). Ask your AI coding agent about your Claude Code spend, limits and savings in plain language. Unofficial, not affiliated with Anthropic.
+
 A local, privacy-first dashboard that shows how much of Claude you're using, which models you're using, and where you could save money.
 
 It reads the usage logs Claude Code already saves on your computer (`~/.claude/projects`). Nothing is uploaded and no API key is needed. A small Node.js server runs at `localhost:4317` and parses those logs. The page is plain HTML, CSS and JavaScript with no dependencies.
@@ -18,6 +20,16 @@ It reads the usage logs Claude Code already saves on your computer (`~/.claude/p
 - **⚡ Optimise**: scores each request and shows where a cheaper model would have done the job, with potential savings and tips.
 - **₹ / $ toggle** for every figure.
 - A small peeking mascot, because why not.
+
+## Use it as an agent skill (free)
+
+TokenOps also comes as an installable skill: you ask your AI coding agent about your Claude Code usage in plain language, and it runs the report on your own computer. Nothing is uploaded and there are no network calls.
+
+- **Get it:** from [Agensi](https://www.agensi.io/skills/tokenops-claude-usage-limits-and-savings). It is free; you need a free Agensi account.
+- **Try asking:** "How much have I spent on Claude Code this week and where can I save money?"
+- **Requires:** Node.js 18 or newer and Claude Code session logs on the same machine.
+
+Compared with this dashboard, the skill adds an agent-readable report, limit alerts at the top of the report, a one-line status mode and a check mode for your own status line or hooks, and CSV straight from the terminal. It reports on Claude Code only, and costs are estimates at API list prices. The skill's files are distributed through Agensi; this repository holds the web dashboard.
 
 ## Two ways to use it
 
