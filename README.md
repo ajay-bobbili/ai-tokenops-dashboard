@@ -75,3 +75,7 @@ Open http://localhost:4317 (on Windows you can double-click `start.bat`). The se
 | `public/index.html` | The whole dashboard UI |
 | `start.bat` | One-click Windows launcher |
 | `.github/workflows/pages.yml` | Deploys `public/` to GitHub Pages |
+
+## License
+
+MIT. See [LICENSE](LICENSE). Copyright (c) 2026 ajay-bobbili. The license covers this repository's code and artwork; Claude and Claude Code remain trademarks of Anthropic, PBC.
