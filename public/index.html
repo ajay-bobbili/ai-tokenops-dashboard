@@ -406,6 +406,9 @@ function mets(rs){let c=0,tok=0,i=0,cr=0,cw=0,big=0;for(const r of rs){const x=c
   return{c,tok,n:rs.length,hit:cr/Math.max(1,cr+cw+i)*100,big:c?big/c*100:0}}
 const CMPROWS=[['Est. cost',usd,'c',0,0],['Tokens',fmt,'tok',0,0],['Requests',v=>Math.round(v).toLocaleString(),'n',0,null],['Cache hit',v=>v.toFixed(1)+'%','hit',1,1],['Share of spend on opus/fable',v=>v.toFixed(1)+'%','big',1,0]];
 function cmpDelta(a,b,k,pp){const diff=a[k]-b[k],base=b[k];if(!pp&&!(base>0))return{t:'n/a'};if(Math.abs(diff)<(pp?.05:1e-9))return{t:'no change'};return{up:diff>0,t:pp?Math.abs(diff).toFixed(1)+' pp':Math.abs(diff/base*100).toFixed(1)+'%'}}
+function covWarn(D,now){if(!DATA.records.length)return'';const first=DATA.records.reduce((a,r)=>Math.min(a,r.t),Infinity),ps=now-2*D*864e5,pe=now-D*864e5;if(first<=ps)return'';
+  const cov=(pe-Math.max(first,ps))/(D*864e5);if(cov<=0)return'';
+  return`Heads up: your logs only cover about ${Math.min(99,Math.max(1,Math.round(cov*100)))}% of the previous ${D} day${D>1?'s':''} (they start on ${ymd(first)}), so these changes look bigger than they really are.`}
 function cmpHTML(){if(!DAYS)return'';const now=Date.now(),a=mets(recs()),pv=DATA.records.filter(r=>r.t>=now-2*DAYS*864e5&&r.t<now-DAYS*864e5),b=mets(pv),has=pv.length>0;
   const rows=CMPROWS;
   const dl=([n,f,k,pp,good])=>{let d='<span style="color:var(--mut)">no earlier data</span>';
@@ -414,7 +417,7 @@ function cmpHTML(){if(!DAYS)return'';const now=Date.now(),a=mets(recs()),pv=DATA
     return`<tr><td>${n}</td><td class="r"><b>${f(a[k])}</b></td><td class="r">${has?f(b[k]):'-'}</td><td class="r">${d}</td></tr>`};
   const d0=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});
   return`<div class="card cmp"><h3>Compared with the previous ${DAYS} day${DAYS>1?'s':''}</h3><table><tr><th>Metric</th><th class="r">Now</th><th class="r">Previous</th><th class="r">Change</th></tr>${rows.map(dl).join('')}</table>
-  <div class="note" style="margin-top:10px">Now: ${d0(now-DAYS*864e5)} to today. Previous: ${d0(now-2*DAYS*864e5)} to ${d0(now-DAYS*864e5)}.${has?'':' No earlier data in your logs for that window.'}</div></div>`}
+  <div class="note" style="margin-top:10px">Now: ${d0(now-DAYS*864e5)} to today. Previous: ${d0(now-2*DAYS*864e5)} to ${d0(now-DAYS*864e5)}.${has?'':' No earlier data in your logs for that window.'}</div>${has&&covWarn(DAYS,now)?`<div class="note" style="margin-top:8px;color:#f59e0b">${covWarn(DAYS,now)}</div>`:''}</div>`}
 function toolsHTML(rs){const all=toolStats(rs),nt=all.find(g=>g.k==='(no tool)'),top=all.filter(g=>g.k!=='(no tool)').slice(0,8);if(nt)top.push(nt);const mx=Math.max(...top.map(g=>g.c))||1;
   return`<div class="card"><h3>Tools used <span>top 8 by est. cost</span></h3>${top.map(g=>`<div class="row" style="grid-template-columns:130px 1fr 175px"><div class="n" title="${esc(g.k)}">${esc(g.k)}</div><div class="tr"><i class="hbar" style="width:${g.c/mx*100}%"></i></div><div class="val">${g.n.toLocaleString()} req · ${usd(g.c)}</div></div>`).join('')||'<div class="note">No requests.</div>'}
   <div class="note" style="margin-top:12px">A request that used several tools counts toward each of them, so rows add up to more than the total.</div></div>`}
@@ -451,7 +454,7 @@ function buildReport(k,hide,now=Date.now()){
   const D={'24h':1,'7d':7,'30d':30}[k];
   if(D){const pv=DATA.records.filter(r=>r.t>=now-2*D*864e5&&r.t<now-D*864e5);
     if(pv.length){const b=mets(pv),R=[['Est. cost'+cc,'c',0,2,x=>cv(x)],['Tokens','tok',0,0,x=>x],['Requests','n',0,0,x=>x],['Cache hit %','hit',1,1,x=>+x.toFixed(1)],['Share of spend on opus/fable %','big',1,1,x=>+x.toFixed(1)]];
-      secs.push({title:'Compared with the previous period',columns:['Metric','Now','Previous','Change'],dpr:R.map(r=>r[3]),rows:R.map(([n,key,pp,,f])=>{const x=cmpDelta(M,b,key,pp);return[n,f(M[key]),f(b[key]),x.up===undefined?x.t:(x.up?'Up ':'Down ')+x.t]}),note:`Now: last ${D} day${D>1?'s':''}. Previous: the ${D} day${D>1?'s':''} before that.`})}}
+      secs.push({title:'Compared with the previous period',columns:['Metric','Now','Previous','Change'],dpr:R.map(r=>r[3]),rows:R.map(([n,key,pp,,f])=>{const x=cmpDelta(M,b,key,pp);return[n,f(M[key]),f(b[key]),x.up===undefined?x.t:(x.up?'Up ':'Down ')+x.t]}),note:`Now: last ${D} day${D>1?'s':''}. Previous: the ${D} day${D>1?'s':''} before that.`+(covWarn(D,now)?' '+covWarn(D,now):'')})}}
   return{period:`${label}: ${ymd(st)} to ${ymd(now)}`,label,generated:ymdhm(Date.now()),
     currency:`All costs are estimates at API list prices in ${CUR}, not a bill.`,sections:secs,
     footer:['Unofficial project, not affiliated with Anthropic. Claude and Claude Code are trademarks of Anthropic, PBC. Credits go to the respective owners.','Generated in your browser; nothing was uploaded.']}}
