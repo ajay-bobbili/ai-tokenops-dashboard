@@ -4,6 +4,8 @@
 
 Live demo: https://ajay-bobbili.github.io/ai-tokenops-dashboard/
 
+**Free agent skill:** get [TokenOps on Agensi](https://www.agensi.io/skills/tokenops-claude-usage-limits-and-savings) or [download the ZIP from GitHub Releases](https://github.com/ajay-bobbili/ai-tokenops-dashboard/releases/tag/skill-v1.1.0). Ask your AI coding agent about your Claude Code spend, limits and savings in plain language. Unofficial, not affiliated with Anthropic.
+
 A local, privacy-first dashboard that shows how much of Claude you're using, which models you're using, and where you could save money.
 
 It reads the usage logs Claude Code already saves on your computer (`~/.claude/projects`). Nothing is uploaded and no API key is needed. A small Node.js server runs at `localhost:4317` and parses those logs. The page is plain HTML, CSS and JavaScript with no dependencies.
@@ -18,6 +20,34 @@ It reads the usage logs Claude Code already saves on your computer (`~/.claude/p
 - **⚡ Optimise**: scores each request and shows where a cheaper model would have done the job, with potential savings and tips.
 - **₹ / $ toggle** for every figure.
 - A small peeking mascot, because why not.
+
+## Use it as an agent skill (free)
+
+TokenOps also comes as an installable skill: you ask your AI coding agent about your Claude Code usage in plain language, and it runs the report on your own computer. Nothing is uploaded and there are no network calls.
+
+- **Get it:** from [Agensi](https://www.agensi.io/skills/tokenops-claude-usage-limits-and-savings), or download `tokenops-skill-1.1.0.zip` from [GitHub Releases](https://github.com/ajay-bobbili/ai-tokenops-dashboard/releases/tag/skill-v1.1.0) (MIT licensed, with the license inside the ZIP).
+- **Install from the ZIP:** unzip it into your Claude Code skills folder so that `SKILL.md` sits directly inside a folder named `tokenops`: `~/.claude/skills/tokenops/` on macOS and Linux, `%USERPROFILE%\.claude\skills\tokenops\` on Windows. If your setup keeps skills elsewhere, check your agent's skills documentation. Then start a new session.
+- **Try asking:** "How much have I spent on Claude Code this week and where can I save money?"
+- **Requires:** Node.js 18 or newer and Claude Code session logs on the same machine.
+
+You can also run the scripts yourself from the unzipped folder:
+
+```bash
+# Markdown report with budgets (limits are in the display currency)
+node scripts/tokenops.mjs --days 30 --daily 60 --weekly 300
+
+# One-page HTML report
+node scripts/tokenops.mjs --json --daily 60 --weekly 300 | node scripts/report-html.mjs --out tokenops-report.html
+
+# One-line status for your own Claude Code status line, and a check mode with exit codes 0, 1, 2
+node scripts/tokenops.mjs --json --daily 60 | node scripts/tokenops-out.mjs statusline
+node scripts/tokenops.mjs --json --daily 60 | node scripts/tokenops-out.mjs check
+
+# CSV tables: daily, models, projects or tools
+node scripts/tokenops.mjs --json | node scripts/tokenops-out.mjs csv daily
+```
+
+Compared with this dashboard, the skill adds an agent-readable report, limit alerts at the top of the report, the status-line and check modes, and CSV straight from the terminal. It reports on Claude Code only, and costs are estimates at API list prices. The skill's files are distributed through the release ZIP and Agensi; this repository holds the web dashboard.
 
 ## Two ways to use it
 
